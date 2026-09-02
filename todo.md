@@ -395,4 +395,4 @@ This request supersedes the approved Community tab as the primary fifth navigati
 - [x] Add reusable hero-panel entrance reveals with reduced-motion and accessibility fallbacks.
 - [x] Add a cohesive accessible page transition to Material routes throughout the app.
 - [x] Preserve readable light/dark contrast and asset error fallbacks on all animated surfaces.
-- [ ] Build, inspect, sign, and deliver the v2.14.0 APK plus refreshed source package.
+- [x] Build, inspect, and deliver the v2.14.0 APK plus refreshed source package; APK is debug-signed because the original production keystore was unavailable after the sandbox reset.
