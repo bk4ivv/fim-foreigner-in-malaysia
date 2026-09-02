@@ -4,6 +4,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -1046,6 +1049,16 @@ ThemeData _buildAppTheme(Brightness brightness) {
     useMaterial3: true,
     fontFamily: 'Roboto',
     colorScheme: scheme,
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: <TargetPlatform, PageTransitionsBuilder>{
+        TargetPlatform.android: _CivicPageTransitionsBuilder(),
+        TargetPlatform.iOS: _CivicPageTransitionsBuilder(),
+        TargetPlatform.linux: _CivicPageTransitionsBuilder(),
+        TargetPlatform.macOS: _CivicPageTransitionsBuilder(),
+        TargetPlatform.windows: _CivicPageTransitionsBuilder(),
+        TargetPlatform.fuchsia: _CivicPageTransitionsBuilder(),
+      },
+    ),
     scaffoldBackgroundColor: Colors.transparent,
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
@@ -1120,14 +1133,33 @@ ThemeData _buildAppTheme(Brightness brightness) {
   );
 }
 
-class CivicAppBackdrop extends StatelessWidget {
+class CivicAppBackdrop extends StatefulWidget {
   const CivicAppBackdrop({super.key, required this.child});
 
   final Widget child;
 
   @override
+  State<CivicAppBackdrop> createState() => _CivicAppBackdropState();
+}
+
+class _CivicAppBackdropState extends State<CivicAppBackdrop>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 18),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     return Stack(
       children: [
         Positioned.fill(
@@ -1140,8 +1172,76 @@ class CivicAppBackdrop extends StatelessWidget {
             child: CustomPaint(painter: _CivicBackdropPainter(isDark: isDark)),
           ),
         ),
-        child,
+        Positioned.fill(
+          child: IgnorePointer(
+            child: Opacity(
+              opacity: isDark ? 0.045 : 0.075,
+              child: Image.asset(
+                'assets/images/culture_batik_texture.jpg',
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ),
+        AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            final travel = reduceMotion ? 0.0 : (_controller.value - 0.5) * 18;
+            return Stack(
+              children: [
+                Positioned(
+                  top: -54 + travel,
+                  right: -74 - travel,
+                  child: _CulturalOrb(
+                    asset: 'assets/images/culture_rainforest_durian.jpg',
+                    size: 190,
+                    opacity: isDark ? 0.08 : 0.11,
+                  ),
+                ),
+                Positioned(
+                  bottom: -74 - travel,
+                  left: -82 + travel,
+                  child: _CulturalOrb(
+                    asset: 'assets/images/culture_lrt_heritage.jpg',
+                    size: 220,
+                    opacity: isDark ? 0.06 : 0.085,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        widget.child,
       ],
+    );
+  }
+}
+
+class _CulturalOrb extends StatelessWidget {
+  const _CulturalOrb({
+    required this.asset,
+    required this.size,
+    required this.opacity,
+  });
+
+  final String asset;
+  final double size;
+  final double opacity;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipOval(
+      child: Opacity(
+        opacity: opacity,
+        child: Image.asset(
+          asset,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+        ),
+      ),
     );
   }
 }
@@ -1249,6 +1349,97 @@ class _CivicPressableState extends State<CivicPressable> {
   }
 }
 
+class CivicPageReveal extends StatefulWidget {
+  const CivicPageReveal({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<CivicPageReveal> createState() => _CivicPageRevealState();
+}
+
+class _CivicPageRevealState extends State<CivicPageReveal>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 520),
+  );
+
+  late final Animation<double> _opacity = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeOutCubic,
+  );
+  late final Animation<Offset> _offset = Tween<Offset>(
+    begin: const Offset(0, 0.035),
+    end: Offset.zero,
+  ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+
+  @override
+  void initState() {
+    super.initState();
+    if (WidgetsBinding
+        .instance
+        .platformDispatcher
+        .accessibilityFeatures
+        .disableAnimations) {
+      _controller.value = 1;
+    } else {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+      return widget.child;
+    }
+    return FadeTransition(
+      opacity: _opacity,
+      child: SlideTransition(position: _offset, child: widget.child),
+    );
+  }
+}
+
+class _CivicPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _CivicPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+      return child;
+    }
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    final fade = CurvedAnimation(
+      parent: animation,
+      curve: const Interval(0, 0.82, curve: Curves.easeOut),
+    );
+    final offset = Tween<Offset>(
+      begin: const Offset(0.025, 0.012),
+      end: Offset.zero,
+    ).animate(curved);
+    return FadeTransition(
+      opacity: fade,
+      child: SlideTransition(position: offset, child: child),
+    );
+  }
+}
+
 class CivicHeroPanel extends StatelessWidget {
   const CivicHeroPanel({
     super.key,
@@ -1281,6 +1472,18 @@ class CivicHeroPanel extends StatelessWidget {
       ),
       child: Stack(
         children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0.09,
+                child: Image.asset(
+                  'assets/images/culture_batik_texture.jpg',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
+          ),
           Positioned(
             right: -26,
             top: -34,
@@ -1313,7 +1516,10 @@ class CivicHeroPanel extends StatelessWidget {
             top: 0,
             child: Container(width: 56, height: 3, color: accent),
           ),
-          Padding(padding: const EdgeInsets.all(20), child: child),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: CivicPageReveal(child: child),
+          ),
         ],
       ),
     );
@@ -1524,9 +1730,8 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
                       Text(
                         'Country data could not be loaded',
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
+                        style: Theme.of(context).textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w900),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -2280,17 +2485,23 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
     final hasLocalizedHub =
         country != null &&
         widget.language != AppLanguage.english &&
-        countryHubProfiles.containsKey(widget.language);
+        _countryLanguageDefaults[country.code.toUpperCase()] == widget.language;
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => country == null
             ? widget.language == AppLanguage.bangla
                   ? const BanglaPriorityHubPage()
-                  : CountryPriorityHubPage(language: widget.language)
+                  : CountryPriorityHubPage(
+                      language: widget.language,
+                      country: country,
+                    )
             : country.code == 'BD' && widget.language == AppLanguage.bangla
             ? const BanglaPriorityHubPage()
             : hasLocalizedHub
-            ? CountryPriorityHubPage(language: widget.language)
+            ? CountryPriorityHubPage(
+                language: widget.language,
+                country: country,
+              )
             : GlobalCountrySupportPage(
                 country: country,
                 language: widget.language,
@@ -2300,18 +2511,24 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
   }
 
   String _navigationLabel(int index) {
-    switch (index) {
-      case 0:
-        return 'Home';
-      case 1:
-        return widget.language == AppLanguage.bangla ? 'শেখা' : 'Learn';
-      case 2:
-        return widget.language == AppLanguage.bangla
-            ? 'সহায়তা ও তথ্য'
-            : 'Help & info';
-      default:
-        return '';
-    }
+    const labels = <AppLanguage, List<String>>{
+      AppLanguage.english: ['Home', 'Learn', 'Help & info'],
+      AppLanguage.bangla: ['হোম', 'শেখা', 'সহায়তা ও তথ্য'],
+      AppLanguage.malay: ['Utama', 'Belajar', 'Bantuan & info'],
+      AppLanguage.indonesian: ['Beranda', 'Belajar', 'Bantuan & info'],
+      AppLanguage.tamil: ['முகப்பு', 'கற்றல்', 'உதவி & தகவல்'],
+      AppLanguage.urdu: ['ہوم', 'سیکھیں', 'مدد اور معلومات'],
+      AppLanguage.hindi: ['होम', 'सीखें', 'मदद और जानकारी'],
+      AppLanguage.nepali: ['गृह', 'सिक्नुहोस्', 'सहायता र जानकारी'],
+      AppLanguage.burmese: ['ပင်မ', 'လေ့လာရန်', 'အကူအညီနှင့် အချက်အလက်'],
+      AppLanguage.thai: ['หน้าหลัก', 'เรียนรู้', 'ช่วยเหลือและข้อมูล'],
+      AppLanguage.khmer: ['ទំព័រដើម', 'រៀន', 'ជំនួយ និងព័ត៌មាន'],
+      AppLanguage.filipino: ['Home', 'Matuto', 'Tulong at impormasyon'],
+      AppLanguage.chinese: ['首页', '学习', '帮助与信息'],
+      AppLanguage.vietnamese: ['Trang chủ', 'Học', 'Trợ giúp & thông tin'],
+      AppLanguage.sinhala: ['මුල් පිටුව', 'ඉගෙනීම', 'උදව් සහ තොරතුරු'],
+    };
+    return labels[widget.language]?[index] ?? '';
   }
 
   @override
@@ -2337,6 +2554,9 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
           MaterialPageRoute<void>(
             builder: (_) => AppInformationPage(copy: _copy),
           ),
+        ),
+        onOpenPrivacy: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => PrivacyPage(copy: _copy)),
         ),
         onOpenCreatorProfile: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
@@ -2546,6 +2766,110 @@ class _WorkerDashboardTab extends StatelessWidget {
   }
 }
 
+enum _TripMode { bus, plane, ferry, train }
+
+class _TripProvider {
+  const _TripProvider({
+    required this.name,
+    required this.url,
+    required this.note,
+  });
+
+  final String name;
+  final String url;
+  final String note;
+}
+
+const _tripProviders = <_TripMode, List<_TripProvider>>{
+  _TripMode.bus: [
+    _TripProvider(
+      name: 'redBus Malaysia',
+      url: 'https://www.redbus.my/',
+      note: 'Compare routes, operators, seats, and online bus tickets.',
+    ),
+    _TripProvider(
+      name: 'BusOnlineTicket',
+      url: 'https://www.busonlineticket.com/',
+      note: 'Bus booking across Malaysia and Singapore.',
+    ),
+    _TripProvider(
+      name: 'Easybook',
+      url: 'https://www.easybook.com/en-my/bus',
+      note: 'Bus schedules and online reservations in Malaysia.',
+    ),
+  ],
+  _TripMode.plane: [
+    _TripProvider(
+      name: 'Malaysia Airlines',
+      url: 'https://www.malaysiaairlines.com/my/en/home.html',
+      note: 'Official Malaysia Airlines booking and manage-booking site.',
+    ),
+    _TripProvider(
+      name: 'AirAsia',
+      url: 'https://www.airasia.com/',
+      note: 'Official AirAsia booking and flight search.',
+    ),
+    _TripProvider(
+      name: 'Google Flights',
+      url: 'https://www.google.com/travel/flights',
+      note: 'Compare flight schedules and fares before booking.',
+    ),
+  ],
+  _TripMode.ferry: [
+    _TripProvider(
+      name: 'BusOnlineTicket Ferry',
+      url: 'https://www.busonlineticket.com/booking/ferry-tickets.aspx',
+      note: 'Ferry tickets for Langkawi, Tioman, Redang, Batam, Bintan, and more.',
+    ),
+    _TripProvider(
+      name: 'Easybook Ferry',
+      url: 'https://www.easybook.com/en-my/ferry',
+      note: 'Online ferry booking for Malaysia routes.',
+    ),
+    _TripProvider(
+      name: 'Malaysia Ferry',
+      url: 'https://www.malaysiaferry.com/',
+      note: 'Ferry route and ticket search.',
+    ),
+  ],
+  _TripMode.train: [
+    _TripProvider(
+      name: 'KTMB',
+      url: 'https://www.ktmb.com.my/',
+      note: 'Official KTM Berhad passenger information and ticket access.',
+    ),
+    _TripProvider(
+      name: 'BusOnlineTicket Train',
+      url: 'https://www.busonlineticket.com/',
+      note: 'Online bus and selected train ticket search.',
+    ),
+  ],
+};
+
+String _tripModeTitle(AppLanguage language, _TripMode mode) {
+  if (language == AppLanguage.bangla) {
+    return switch (mode) {
+      _TripMode.bus => 'বাস',
+      _TripMode.plane => 'বিমান',
+      _TripMode.ferry => 'ফেরি',
+      _TripMode.train => 'ট্রেন',
+    };
+  }
+  return switch (mode) {
+    _TripMode.bus => 'Bus',
+    _TripMode.plane => 'Plane',
+    _TripMode.ferry => 'Ferry',
+    _TripMode.train => 'Train',
+  };
+}
+
+IconData _tripModeIcon(_TripMode mode) => switch (mode) {
+  _TripMode.bus => Icons.directions_bus_outlined,
+  _TripMode.plane => Icons.flight_outlined,
+  _TripMode.ferry => Icons.directions_boat_outlined,
+  _TripMode.train => Icons.train_outlined,
+};
+
 class TripsPage extends StatelessWidget {
   const TripsPage({super.key, required this.language});
 
@@ -2553,83 +2877,130 @@ class TripsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isBangla = language == AppLanguage.bangla;
-    final providers = [
-      (
-        isBangla ? 'Cheapflights Malaysia' : 'Cheapflights Malaysia',
-        'https://www.cheapflights.com.my/',
-        Icons.flight_outlined,
-      ),
-      (
-        'Trip.com Malaysia',
-        'https://my.trip.com/?locale=en-MY&curr=MYR',
-        Icons.hotel_outlined,
-      ),
-      ('Mynztrip', 'https://mynztrip.com/', Icons.luggage_outlined),
-      (
-        'Google Flights',
-        'https://www.google.com/travel/flights',
-        Icons.travel_explore_outlined,
-      ),
-    ];
-    return Scaffold(
-      appBar: _AppBar(title: isBangla ? 'ভ্রমণ ও ফ্লাইট' : 'Trips & flights'),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
-        children: [
-          CivicHeroPanel(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  Icons.flight_takeoff_rounded,
-                  color: Colors.white,
-                  size: 32,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  isBangla
-                      ? 'ভ্রমণের সাইট এক জায়গায়'
-                      : 'Travel sites in one place',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+    final copy = appCopies[language]!;
+    final modes = _TripMode.values;
+    return Directionality(
+      textDirection: copy.direction,
+      child: Scaffold(
+        appBar: _AppBar(
+          title: language == AppLanguage.bangla ? 'ভ্রমণ' : 'Trips',
+        ),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+          children: [
+            CivicHeroPanel(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.travel_explore_rounded,
                     color: Colors.white,
-                    fontWeight: FontWeight.w900,
+                    size: 32,
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  isBangla
-                      ? 'ফ্লাইট ও ভ্রমণ খোঁজার জন্য একটি সাইট বেছে নিন।'
-                      : 'Choose a site to search flights and travel options.',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.74),
-                    height: 1.45,
+                  const SizedBox(height: 12),
+                  Text(
+                    language == AppLanguage.bangla
+                        ? 'যাতায়াতের ধরন বেছে নিন'
+                        : 'Choose your way to travel',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 6),
+                  Text(
+                    language == AppLanguage.bangla
+                        ? 'বাস, বিমান, ফেরি বা ট্রেন বেছে নিয়ে টিকিট খোঁজার সাইট দেখুন।'
+                        : 'Choose bus, plane, ferry, or train to see suitable ticket sites.',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.74),
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 18),
-          for (final provider in providers) ...[
-            _HelpActionCard(
-              icon: provider.$3,
-              title: provider.$1,
-              subtitle: isBangla
-                  ? 'সাইটটি অ্যাপের ভেতরেই খুলবে'
-                  : 'Opens inside the app',
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => StatusWebViewPage(
-                    title: provider.$1,
-                    url: provider.$2,
-                    copy: appCopies[language]!,
+            const SizedBox(height: 18),
+            for (final mode in modes) ...[
+              _HelpActionCard(
+                icon: _tripModeIcon(mode),
+                title: _tripModeTitle(language, mode),
+                subtitle: language == AppLanguage.bangla
+                    ? 'টিকিট বুকিং সাইট দেখুন'
+                    : 'Find ticket-booking websites',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) =>
+                        TripProvidersPage(language: language, mode: mode),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
+            ],
           ],
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class TripProvidersPage extends StatelessWidget {
+  const TripProvidersPage({
+    super.key,
+    required this.language,
+    required this.mode,
+  });
+
+  final AppLanguage language;
+  final _TripMode mode;
+
+  @override
+  Widget build(BuildContext context) {
+    final copy = appCopies[language]!;
+    final providers = _tripProviders[mode]!;
+    final modeTitle = _tripModeTitle(language, mode);
+    return Directionality(
+      textDirection: copy.direction,
+      child: Scaffold(
+        appBar: _AppBar(
+          title: language == AppLanguage.bangla
+              ? '$modeTitle টিকিট'
+              : '$modeTitle tickets',
+          leading: IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.arrow_back_rounded),
+          ),
+        ),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+          children: [
+            _BanglaSection(
+              icon: _tripModeIcon(mode),
+              title: language == AppLanguage.bangla
+                  ? '$modeTitle টিকিট খুঁজুন'
+                  : 'Find $modeTitle tickets',
+              body: language == AppLanguage.bangla
+                  ? 'সাইটের নাম, রুট, মূল্য ও নিয়ম নিজে যাচাই করে তারপর বুক করুন।'
+                  : 'Compare the route, fare, operator, and booking rules before paying.',
+              color: AppPalette.flagRed,
+            ),
+            const SizedBox(height: 14),
+            for (final provider in providers) ...[
+              _HelpActionCard(
+                icon: Icons.confirmation_number_outlined,
+                title: provider.name,
+                subtitle: provider.note,
+                onTap: () => openWebsiteInApp(
+                  context,
+                  title: provider.name,
+                  url: provider.url,
+                  copy: copy,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -3011,26 +3382,14 @@ class _LearningTab extends StatelessWidget {
               ? 'ক্যাটাগরি, উচ্চারণ এবং বাংলা অর্থসহ শেখার লাইব্রেরি'
               : profile?.primaryMeaning ??
                     'Translate text, voice, and documents into Bahasa Melayu.',
-          onTap: () => isBangla
-              ? Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const BanglaPhrasebookPage(),
-                  ),
-                )
-              : language == AppLanguage.english
-              ? Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => TranslationHubPage(language: language),
-                  ),
-                )
-              : Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => CountryPhrasebookPage(
-                      language: language,
-                      profile: countryHubProfiles[language]!,
-                    ),
-                  ),
-                ),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => CountryPhrasebookPage(
+                language: language,
+                profile: countryHubProfiles[language],
+              ),
+            ),
+          ),
         ),
         const SizedBox(height: 12),
         _UtilityListTile(
@@ -3108,12 +3467,14 @@ class _HelpTab extends StatelessWidget {
     required this.language,
     required this.onOpenCountryHub,
     required this.onOpenAppInformation,
+    required this.onOpenPrivacy,
     required this.onOpenCreatorProfile,
   });
 
   final AppLanguage language;
   final VoidCallback onOpenCountryHub;
   final VoidCallback onOpenAppInformation;
+  final VoidCallback onOpenPrivacy;
   final VoidCallback onOpenCreatorProfile;
 
   @override
@@ -3213,14 +3574,21 @@ class _HelpTab extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _HelpActionCard(
-          icon: Icons.privacy_tip_outlined,
-          title: isBangla
-              ? 'অ্যাপ তথ্য ও গোপনীয়তা'
-              : 'App information & privacy',
+          icon: Icons.info_outline_rounded,
+          title: isBangla ? 'অ্যাপ সম্পর্কে' : 'About FIM',
           subtitle: isBangla
-              ? 'এই ফ্রি অ্যাপ, গোপনীয়তা, ক্রেডিট ও যোগাযোগের তথ্য'
-              : 'Free-use information, privacy, creator credit, and contact details',
+              ? 'অ্যাপটি কেন তৈরি, কীভাবে কাজ করে ও ফ্রি ব্যবহারের তথ্য'
+              : 'Why FIM exists, how it works, and free-use information',
           onTap: onOpenAppInformation,
+        ),
+        const SizedBox(height: 12),
+        _HelpActionCard(
+          icon: Icons.privacy_tip_outlined,
+          title: isBangla ? 'গোপনীয়তা নীতি' : 'Privacy policy',
+          subtitle: isBangla
+              ? 'ডেটা, ক্যামেরা, বাহ্যিক সেবা ও আপনার নিয়ন্ত্রণ'
+              : 'Data, camera access, external services, and your controls',
+          onTap: onOpenPrivacy,
         ),
         const SizedBox(height: 12),
         _HelpActionCard(
@@ -5065,48 +5433,8 @@ class _CompactCreditBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final isBangla = copy.languageName == 'বাংলা';
-    return Material(
-      color: scheme.surface,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
-            children: [
-              Icon(Icons.privacy_tip_outlined, color: scheme.onSurface),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  isBangla
-                      ? 'অ্যাপ তথ্য ও গোপনীয়তা'
-                      : 'App information & privacy',
-                  style: TextStyle(
-                    color: scheme.onSurface,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              IconButton(
-                tooltip: isBangla ? 'অ্যাপ তথ্য' : 'App information',
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => AppInformationPage(copy: copy),
-                  ),
-                ),
-                icon: Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  color: scheme.onSurface,
-                  size: 17,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    // Dedicated About, Privacy, and Credit destinations live in Help & info.
+    return const SizedBox.shrink();
   }
 }
 
@@ -5698,6 +6026,135 @@ class CreatorProfilePage extends StatelessWidget {
   }
 }
 
+class PrivacyPage extends StatelessWidget {
+  const PrivacyPage({super.key, required this.copy});
+
+  final AppCopy copy;
+
+  bool get _isBangla => copy.languageName == 'বাংলা';
+
+  String _text(String english, String bangla) => _isBangla ? bangla : english;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Directionality(
+      textDirection: copy.direction,
+      child: Scaffold(
+        appBar: _AppBar(
+          title: _text('Privacy policy', 'গোপনীয়তা নীতি'),
+          leading: IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.arrow_back_rounded),
+          ),
+        ),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+          children: [
+            CivicHeroPanel(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.privacy_tip_outlined,
+                    color: AppPalette.flagYellow,
+                    size: 30,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _text(
+                      'Your privacy stays in your hands',
+                      'আপনার গোপনীয়তা আপনার নিয়ন্ত্রণে',
+                    ),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _text(
+                      'FIM is free to use. Worker tools do not require an account.',
+                      'FIM বিনামূল্যে ব্যবহার করা যায়। কর্মী টুল ব্যবহারে অ্যাকাউন্ট লাগে না।',
+                    ),
+                    style: const TextStyle(
+                      color: Color(0xFFE6E7EF),
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            _InfoCard(
+              icon: Icons.storage_outlined,
+              title: _text(
+                'No worker data is sold',
+                'কর্মীর তথ্য বিক্রি করা হয় না',
+              ),
+              body: _text(
+                'FIM does not ask for passport numbers, passwords, or payment details for its basic tools. Official websites may request information under their own policies.',
+                'FIM-এর সাধারণ টুল পাসপোর্ট নম্বর, পাসওয়ার্ড বা পেমেন্ট তথ্য চায় না। সরকারি ওয়েবসাইট তাদের নিজস্ব নীতিতে তথ্য চাইতে পারে।',
+              ),
+            ),
+            const SizedBox(height: 12),
+            _InfoCard(
+              icon: Icons.camera_alt_outlined,
+              title: _text('Camera and QR scanner', 'ক্যামেরা ও QR স্ক্যানার'),
+              body: _text(
+                'Camera access is used only when you open the QR scanner. The scanned value is used on your device to open the link you choose.',
+                'QR স্ক্যানার খুললেই শুধু ক্যামেরা ব্যবহার হয়। স্ক্যান করা তথ্য আপনার ডিভাইসে আপনার বেছে নেওয়া লিংক খোলার জন্য ব্যবহৃত হয়।',
+              ),
+            ),
+            const SizedBox(height: 12),
+            _InfoCard(
+              icon: Icons.open_in_new_rounded,
+              title: _text('External websites', 'বাহ্যিক ওয়েবসাইট'),
+              body: _text(
+                'Visa, FOMEMA, transport, translation, and government pages are operated by their respective providers. Review their privacy terms before submitting personal information.',
+                'ভিসা, FOMEMA, যাতায়াত, অনুবাদ ও সরকারি পেজ সংশ্লিষ্ট প্রতিষ্ঠানের পরিচালিত। ব্যক্তিগত তথ্য দেওয়ার আগে তাদের গোপনীয়তা নীতি পড়ুন।',
+              ),
+            ),
+            const SizedBox(height: 12),
+            _InfoCard(
+              icon: Icons.mail_outline_rounded,
+              title: 'hire.borhankabir@hotmail.com',
+              body: _text(
+                'Contact the creator about a privacy question or app issue.',
+                'গোপনীয়তা বা অ্যাপের সমস্যা সম্পর্কে নির্মাতাকে ইমেইল করুন।',
+              ),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () => launchUrl(
+                Uri(scheme: 'mailto', path: 'hire.borhankabir@hotmail.com'),
+                mode: LaunchMode.externalApplication,
+              ),
+              icon: const Icon(Icons.email_outlined),
+              label: Text(
+                _text('Email privacy contact', 'গোপনীয়তা যোগাযোগে ইমেইল করুন'),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _text(
+                'Last reviewed for this app release. Information may change when an external service changes its own policy.',
+                'এই অ্যাপ রিলিজের জন্য সর্বশেষ পর্যালোচনা করা হয়েছে। বাহ্যিক সেবা তাদের নীতি পরিবর্তন করলে তথ্য পরিবর্তিত হতে পারে।',
+              ),
+              style: TextStyle(
+                color: scheme.onSurface.withValues(alpha: 0.65),
+                fontSize: 11,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class AppInformationPage extends StatelessWidget {
   const AppInformationPage({super.key, required this.copy});
 
@@ -5714,7 +6171,7 @@ class AppInformationPage extends StatelessWidget {
       textDirection: copy.direction,
       child: Scaffold(
         appBar: _AppBar(
-          title: _text('About & privacy', 'অ্যাপের তথ্য ও গোপনীয়তা'),
+          title: _text('About FIM', 'FIM সম্পর্কে'),
           leading: IconButton(
             onPressed: () => Navigator.of(context).pop(),
             icon: const Icon(Icons.arrow_back_rounded),
@@ -6571,6 +7028,18 @@ class GlobalCountrySupportPage extends StatelessWidget {
               ),
             ),
             _CountryResourceTile(
+              icon: Icons.public_outlined,
+              title: '${country.name} government portal',
+              subtitle: _knownCountryOfficialPortal(country) != null
+                  ? 'Verified country-government starting point'
+                  : 'Direct portal not verified; opens the official Malaysia MFA directory',
+              onTap: () => _open(
+                context,
+                '${country.name} government portal',
+                _officialCountryPortal(country),
+              ),
+            ),
+            _CountryResourceTile(
               icon: Icons.work_outline_rounded,
               title: 'Work portal',
               subtitle: 'Malaysia MyGovernment worker guidance',
@@ -6675,20 +7144,54 @@ class _CountryResourceTile extends StatelessWidget {
   }
 }
 
+const _countryOfficialPortals = <String, String>{
+  'BD': 'https://bangladesh.gov.bd/',
+  'KH': 'https://www.cambodia.gov.kh/',
+  'CN': 'https://www.gov.cn/',
+  'IN': 'https://www.india.gov.in/',
+  'ID': 'https://www.indonesia.go.id/',
+  'LA': 'https://www.laogov.gov.la/',
+  'MM': 'https://myanmar.gov.mm/',
+  'NP': 'https://nepal.gov.np/',
+  'PK': 'https://www.pakistan.gov.pk/',
+  'PH': 'https://www.gov.ph/',
+  'LK': 'https://www.gov.lk/',
+  'TH': 'https://www.thaigov.go.th/',
+  'VN': 'https://chinhphu.vn/',
+  'MY': 'https://www.malaysia.gov.my/',
+};
+
+String? _knownCountryOfficialPortal(CountryOption country) =>
+    _countryOfficialPortals[country.code.toUpperCase()];
+
+String _officialCountryPortal(CountryOption country) =>
+    _knownCountryOfficialPortal(country) ??
+    'https://www.kln.gov.my/web/guest/foreign-missions-in-malaysia';
+
 class CountryPriorityHubPage extends StatelessWidget {
-  const CountryPriorityHubPage({super.key, required this.language});
+  const CountryPriorityHubPage({
+    super.key,
+    required this.language,
+    this.country,
+  });
 
   final AppLanguage language;
+  final CountryOption? country;
 
   @override
   Widget build(BuildContext context) {
     final profile = countryHubProfiles[language]!;
     final copy = appCopies[language]!;
+    final countryLabel = country == null
+        ? null
+        : '${country!.flag} ${country!.name}';
     return Directionality(
       textDirection: copy.direction,
       child: Scaffold(
         appBar: _AppBar(
-          title: profile.hubTitle,
+          title: countryLabel == null
+              ? profile.hubTitle
+              : '$countryLabel · ${profile.hubTitle}',
           leading: IconButton(
             onPressed: () => Navigator.of(context).pop(),
             icon: const Icon(Icons.arrow_back_rounded),
@@ -6705,7 +7208,7 @@ class CountryPriorityHubPage extends StatelessWidget {
         body: ListView(
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
           children: [
-            _CountryHubHero(profile: profile),
+            _CountryHubHero(profile: profile, country: country),
             const SizedBox(height: 18),
             _CountryHubCard(
               number: '01',
@@ -6786,14 +7289,23 @@ class CountryPriorityHubPage extends StatelessWidget {
               number: '06',
               icon: Icons.public_outlined,
               title: _localizedGovernmentPortalTitle(language),
-              subtitle: profile.supportDescription,
+              subtitle: country == null
+                  ? profile.supportDescription
+                  : '${country!.name} official government portal or Malaysia MFA directory',
               color: AppPalette.ink,
-              onTap: () => openWebsiteInApp(
-                context,
-                title: _localizedGovernmentPortalTitle(language),
-                url: countryGovernmentPortals[language]!,
-                copy: copy,
-              ),
+              onTap: country == null
+                  ? () => openWebsiteInApp(
+                      context,
+                      title: _localizedGovernmentPortalTitle(language),
+                      url: countryGovernmentPortals[language]!,
+                      copy: copy,
+                    )
+                  : () => openWebsiteInApp(
+                      context,
+                      title: '${country!.name} official government portal',
+                      url: _officialCountryPortal(country!),
+                      copy: copy,
+                    ),
             ),
           ],
         ),
@@ -6803,9 +7315,10 @@ class CountryPriorityHubPage extends StatelessWidget {
 }
 
 class _CountryHubHero extends StatelessWidget {
-  const _CountryHubHero({required this.profile});
+  const _CountryHubHero({required this.profile, this.country});
 
   final CountryHubProfile profile;
+  final CountryOption? country;
 
   @override
   Widget build(BuildContext context) {
@@ -6813,10 +7326,16 @@ class _CountryHubHero extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _HeroStatusPill(label: 'COUNTRY SUPPORT'),
+          _HeroStatusPill(
+            label: country == null
+                ? 'COUNTRY SUPPORT'
+                : '${country!.code} SUPPORT',
+          ),
           const SizedBox(height: 12),
           Text(
-            profile.heroTitle,
+            country == null
+                ? profile.heroTitle
+                : '${country!.name}: ${profile.heroTitle}',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 22,
@@ -6826,7 +7345,9 @@ class _CountryHubHero extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            profile.heroBody,
+            country == null
+                ? profile.heroBody
+                : '${profile.heroBody} Official home-country routes are shown for ${country!.name}; verify current contacts before use.',
             style: const TextStyle(
               color: Color(0xFFD8D8D2),
               fontSize: 12.5,
@@ -7031,15 +7552,74 @@ class CountryServiceGuidePage extends StatelessWidget {
   }
 }
 
+String _learningSearchHint(AppLanguage language) => switch (language) {
+  AppLanguage.bangla => 'মালয় শব্দ বা বাক্য খুঁজুন',
+  AppLanguage.hindi => 'मलय शब्द या वाक्य खोजें',
+  AppLanguage.urdu => 'ملائی الفاظ یا جملے تلاش کریں',
+  AppLanguage.nepali => 'मलय शब्द वा वाक्य खोज्नुहोस्',
+  AppLanguage.malay => 'Cari perkataan atau ayat Melayu',
+  AppLanguage.indonesian => 'Cari kata atau kalimat Melayu',
+  AppLanguage.tamil => 'மலாய் சொற்கள் அல்லது வாக்கியங்களைத் தேடுங்கள்',
+  AppLanguage.chinese => '搜索马来语单词或句子',
+  AppLanguage.thai => 'ค้นหาคำหรือประโยคภาษามลายู',
+  AppLanguage.vietnamese => 'Tìm từ hoặc câu tiếng Malay',
+  AppLanguage.burmese => 'မလေးစကားလုံး သို့မဟုတ် စာကြောင်း ရှာရန်',
+  AppLanguage.khmer => 'ស្វែងរកពាក្យ ឬប្រយោគម៉ាឡេ',
+  AppLanguage.filipino => 'Maghanap ng salitang o pangungusap sa Malay',
+  AppLanguage.sinhala => 'මැලේ වචන හෝ වාක්‍ය සොයන්න',
+  AppLanguage.english => 'Search Malay words or phrases',
+};
+
+String _learningNoMatch(AppLanguage language) => switch (language) {
+  AppLanguage.bangla => 'মিল পাওয়া যায়নি।',
+  AppLanguage.hindi => 'कोई मिलान नहीं मिला।',
+  AppLanguage.urdu => 'کوئی مماثلت نہیں ملی۔',
+  AppLanguage.nepali => 'कुनै मिल्दो कुरा भेटिएन।',
+  AppLanguage.malay => 'Tiada padanan ditemui.',
+  AppLanguage.indonesian => 'Tidak ada kecocokan.',
+  AppLanguage.tamil => 'பொருத்தம் எதுவும் கிடைக்கவில்லை.',
+  AppLanguage.chinese => '没有找到匹配内容。',
+  AppLanguage.thai => 'ไม่พบรายการที่ตรงกัน',
+  AppLanguage.vietnamese => 'Không tìm thấy kết quả phù hợp.',
+  AppLanguage.burmese => 'ကိုက်ညီမှု မတွေ့ပါ။',
+  AppLanguage.khmer => 'រកមិនឃើញលទ្ធផលដែលត្រូវគ្នា។',
+  AppLanguage.filipino => 'Walang nahanap na tugma.',
+  AppLanguage.sinhala => 'ගැළපෙන කිසිවක් හමු නොවීය.',
+  AppLanguage.english => 'No matching Malay phrase found.',
+};
+
+const _englishLearningProfile = CountryHubProfile(
+  hubTitle: 'Support',
+  hubSubtitle: 'Official support and practical tools',
+  heroTitle: 'Learn Malay for daily life',
+  heroBody: 'Use the complete Malay sentences and words library with pronunciation support.',
+  serviceGuideTitle: 'Official services',
+  serviceAdvice: 'Use official sources for current rules.',
+  phrasebookTitle: 'Malay phrasebook',
+  phrasebookSubtitle: 'Malay words and sentences with pronunciation support.',
+  primaryMeaning: 'I need help.',
+  emergencyMeaning: 'Please, this is an emergency.',
+  supportTitle: 'Country support',
+  supportSubtitle: 'Find official routes for your country.',
+  supportName: 'Malaysia MFA directory',
+  supportDescription: 'Official directory of foreign missions in Malaysia.',
+  supportUrl: 'https://www.kln.gov.my/web/guest/foreign-missions-in-malaysia',
+  workerTitle: 'Worker support',
+  workerBody: 'Keep official contacts close when you need help.',
+  openOfficialLabel: 'Open official site',
+);
+
+CountryHubProfile _learningProfileFor(AppLanguage language) =>
+    countryHubProfiles[language] ?? _englishLearningProfile;
+
 class CountryPhrasebookPage extends StatefulWidget {
   const CountryPhrasebookPage({
     super.key,
     required this.language,
-    required this.profile,
+    this.profile,
   });
-
   final AppLanguage language;
-  final CountryHubProfile profile;
+  final CountryHubProfile? profile;
 
   @override
   State<CountryPhrasebookPage> createState() => _CountryPhrasebookPageState();
@@ -7074,7 +7654,8 @@ class _CountryPhrasebookPageState extends State<CountryPhrasebookPage> {
         if (!snapshot.hasData) {
           return CountryHubScaffold(
             language: widget.language,
-            title: widget.profile.phrasebookTitle,
+            title: (widget.profile ?? _learningProfileFor(widget.language))
+                .phrasebookTitle,
             children: const [
               Padding(
                 padding: EdgeInsets.only(top: 48),
@@ -7089,7 +7670,7 @@ class _CountryPhrasebookPageState extends State<CountryPhrasebookPage> {
   }
 
   Widget _buildLibrary(BuildContext context, _MalayLearningLibrary library) {
-    final profile = widget.profile;
+    final profile = widget.profile ?? _learningProfileFor(widget.language);
     final scheme = Theme.of(context).colorScheme;
     final sentenceMode = _mode == _LearningLibraryMode.sentences;
     final List<_CountryLearningItem> items = sentenceMode
@@ -7102,6 +7683,8 @@ class _CountryPhrasebookPageState extends State<CountryPhrasebookPage> {
               .map(
                 (item) => _CountryLearningItem(
                   malay: item.malay,
+                  pronunciation: item.pronunciation,
+                  meaning: item.meaning,
                   label: item.category,
                 ),
               )
@@ -7115,6 +7698,8 @@ class _CountryPhrasebookPageState extends State<CountryPhrasebookPage> {
               .map(
                 (item) => _CountryLearningItem(
                   malay: item.malay,
+                  pronunciation: item.pronunciation,
+                  meaning: item.meaning,
                   label: item.wordType,
                 ),
               )
@@ -7183,7 +7768,7 @@ class _CountryPhrasebookPageState extends State<CountryPhrasebookPage> {
             _visibleLimit = 40;
           }),
           decoration: InputDecoration(
-            hintText: 'Search Malay words or phrases',
+            hintText: _learningSearchHint(widget.language),
             prefixIcon: const Icon(Icons.search_rounded),
             filled: true,
             fillColor: scheme.surface,
@@ -7210,7 +7795,13 @@ class _CountryPhrasebookPageState extends State<CountryPhrasebookPage> {
         ),
         const SizedBox(height: 18),
         CivicSectionLabel(
-          label: sentenceMode ? 'Malay sentences' : 'Malay words',
+          label: sentenceMode
+              ? (widget.language == AppLanguage.bangla
+                    ? 'মালয় বাক্য'
+                    : 'Malay sentences')
+              : (widget.language == AppLanguage.bangla
+                    ? 'মালয় শব্দ'
+                    : 'Malay words'),
           trailing: _CountPill(label: '${items.length} results'),
         ),
         const SizedBox(height: 12),
@@ -7224,14 +7815,18 @@ class _CountryPhrasebookPageState extends State<CountryPhrasebookPage> {
         ],
         if (visible.isEmpty)
           Text(
-            'No matching Malay phrase found.',
+            _learningNoMatch(widget.language),
             style: TextStyle(color: scheme.onSurface.withValues(alpha: 0.7)),
           ),
         if (items.length > visible.length)
           OutlinedButton.icon(
             onPressed: () => setState(() => _visibleLimit += 40),
             icon: const Icon(Icons.expand_more_rounded),
-            label: Text('Show ${items.length - visible.length} more'),
+            label: Text(
+              widget.language == AppLanguage.bangla
+                  ? 'আরও ${items.length - visible.length}টি দেখুন'
+                  : 'Show ${items.length - visible.length} more',
+            ),
           ),
       ],
     );
@@ -7365,9 +7960,16 @@ class _CountryLearningShortcut extends StatelessWidget {
 }
 
 class _CountryLearningItem {
-  const _CountryLearningItem({required this.malay, required this.label});
+  const _CountryLearningItem({
+    required this.malay,
+    required this.pronunciation,
+    required this.meaning,
+    required this.label,
+  });
 
   final String malay;
+  final String pronunciation;
+  final String meaning;
   final String label;
 }
 
@@ -7417,7 +8019,18 @@ class _CountryLibraryItemCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '$targetLabel · tap to translate and listen',
+                    item.pronunciation,
+                    style: TextStyle(
+                      color: scheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    language == AppLanguage.bangla
+                        ? item.meaning
+                        : '$targetLabel · tap to translate and listen',
                     style: TextStyle(
                       color: scheme.onSurface.withValues(alpha: 0.68),
                       fontSize: 11.5,
@@ -9970,6 +10583,53 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
     );
   }
 
+  Future<void> _printOrSaveResult() async {
+    try {
+      final raw = await _controller.runJavaScriptReturningResult(
+        'document.body ? document.body.innerText : ""',
+      );
+      final visibleText = raw.toString().replaceAll(r'\n', '\n').trim();
+      final pdf = pw.Document();
+      pdf.addPage(
+        pw.MultiPage(
+          build: (context) => [
+            pw.Header(level: 0, text: widget.title),
+            pw.Paragraph(
+              text: visibleText.isEmpty
+                  ? 'No readable result text was found.'
+                  : visibleText,
+            ),
+            pw.SizedBox(height: 16),
+            pw.Paragraph(text: 'Source: ${widget.url}'),
+            pw.Paragraph(text: 'Generated by FIM - Foreigner in Malaysia.'),
+          ],
+        ),
+      );
+      final bytes = await pdf.save();
+      final directory = await getApplicationDocumentsDirectory();
+      final safeName = widget.title.toLowerCase().replaceAll(
+        RegExp(r'[^a-z0-9]+'),
+        '_',
+      );
+      final file = File('${directory.path}/${safeName}_result.pdf');
+      await file.writeAsBytes(bytes, flush: true);
+      await Printing.sharePdf(bytes: bytes, filename: '${safeName}_result.pdf');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PDF saved and ready to print: ${file.path}')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('The result could not be prepared for printing.'),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   void dispose() {
     _loadTimeout?.cancel();
@@ -10045,10 +10705,24 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
               ),
             ],
           ),
-          floatingActionButton: FloatingActionButton.small(
-            tooltip: widget.copy.reload,
-            onPressed: () => _controller.reload(),
-            child: const Icon(Icons.refresh_rounded),
+          floatingActionButton: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              FloatingActionButton.small(
+                heroTag: 'print-result',
+                tooltip: 'Print or save result',
+                onPressed: _printOrSaveResult,
+                child: const Icon(Icons.print_outlined),
+              ),
+              const SizedBox(height: 10),
+              FloatingActionButton.small(
+                heroTag: 'reload-page',
+                tooltip: widget.copy.reload,
+                onPressed: () => _controller.reload(),
+                child: const Icon(Icons.refresh_rounded),
+              ),
+            ],
           ),
         ),
       ),

@@ -111,15 +111,12 @@ void main() {
   test(
     'bundles every country-selection dataset required by the loader',
     () async {
-    final iso = await File(
-      'assets/data/iso_countries.json',
-    ).readAsString();
-    final languages = await File(
-      'assets/data/country_by_languages.json',
-    ).readAsString();
-    final currencies = jsonDecode(
-      await File('assets/data/country_currencies.json').readAsString(),
-    ) as Map<String, dynamic>;
+      final iso = await File('assets/data/iso_countries.json').readAsString();
+      final languages = await File('assets/data/country_by_languages.json')
+          .readAsString();
+      final currencies = jsonDecode(
+        await File('assets/data/country_currencies.json').readAsString(),
+      ) as Map<String, dynamic>;
 
       expect(iso, contains('Bangladesh'));
       expect(languages, contains('Bangladesh'));
@@ -154,4 +151,26 @@ void main() {
       expect(words.map((item) => item['malay']).toSet().length, words.length);
     },
   );
+
+  testWidgets('Trips starts with bus, plane, ferry, and train choices', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: TripsPage(language: AppLanguage.english)),
+    );
+
+    expect(find.text('Bus'), findsOneWidget);
+    expect(find.text('Plane'), findsOneWidget);
+    expect(find.text('Ferry'), findsOneWidget);
+    expect(find.text('Train'), findsOneWidget);
+  });
+
+  testWidgets('Privacy is a dedicated destination', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: PrivacyPage(copy: appCopies[AppLanguage.english]!)),
+    );
+
+    expect(find.text('Privacy policy'), findsOneWidget);
+    expect(find.text('Your privacy stays in your hands'), findsOneWidget);
+  });
 }

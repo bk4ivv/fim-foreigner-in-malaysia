@@ -357,8 +357,42 @@ This request supersedes the approved Community tab as the primary fifth navigati
 
 ## GitHub Source Import
 
-- [ ] Inspect the selected GitHub repository before writing anything.
-- [ ] Refresh the portable source package from the latest working v2.12.4 source.
-- [ ] Exclude secrets, private signing keys, SDKs, caches, and generated build output.
-- [ ] Import the source into an appropriate GitHub repository or subdirectory without overwriting unrelated content.
-- [ ] Verify the remote commit and provide the repository link plus ZIP source package.
+- [x] Inspect the selected GitHub repository before writing anything.
+- [x] Refresh the portable source package from the latest working v2.12.4 source.
+- [x] Exclude secrets, private signing keys, SDKs, caches, and generated build output.
+- [x] Import the source into an appropriate GitHub repository or subdirectory without overwriting unrelated content.
+- [x] Verify the remote commit and provide the repository link plus ZIP source package.
+
+## FIM Product Expansion Update
+
+- [x] Add an in-app print/save/download action for result pages opened in the WebView, with a clear offline fallback where the site blocks direct downloads.
+- [x] Redesign Trips so users first choose bus, plane, ferry, or train, then see suitable ticket-booking sites.
+- [ ] Expand language selection and primary UI copy so supported non-English languages are genuinely localized instead of falling back to English-only screens.
+- [ ] Expand the 248-country support data with country-specific official government, embassy/high-commission, social, and helpline resources, clearly marking unavailable entries.
+- [ ] Expand translation and learning content for every supported app language beyond English and Google Translate handoffs.
+- [x] Move About and Privacy into distinct dedicated destinations rather than repeating them across pages.
+- [ ] Redesign Credit and Privacy screens with a premium Malaysian palette that preserves readable contrast in light and dark modes.
+- [x] Add regression tests, validate all existing v2.11.0 behavior, and build the next FIM APK.
+
+### Source restoration note
+
+- [x] Restore the complete canonical Flutter source and bundled assets from the verified private GitHub repository before continuing this update, because the reset workspace currently lacks the `assets/data` tree.
+
+## Exact Malaysian Flag Logo Replacement
+
+- [x] Replace the current FIM in-app and launcher logo references with the exact uploaded Malaysian flag image.
+- [x] Verify the image is bundled in Flutter assets and all Android launcher densities.
+- [x] Run tests, build, and verify the logo-branded APK.
+
+### Animation work source restoration
+
+- [x] Restore the latest canonical Flutter source and bundled assets from the private FIM GitHub repository before adding cultural animation assets or changing animation code.
+
+## v2.14.0 Malaysian Cultural Art and Motion Polish
+
+- [x] Optimize generated batik, rainforest/durian, and LRT/heritage artwork into lightweight offline JPG assets.
+- [x] Add a subtle animated Malaysian cultural backdrop with batik texture and art-orb imagery across the app shell.
+- [x] Add reusable hero-panel entrance reveals with reduced-motion and accessibility fallbacks.
+- [x] Add a cohesive accessible page transition to Material routes throughout the app.
+- [x] Preserve readable light/dark contrast and asset error fallbacks on all animated surfaces.
+- [ ] Build, inspect, sign, and deliver the v2.14.0 APK plus refreshed source package.
