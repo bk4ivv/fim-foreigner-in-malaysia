@@ -16,3 +16,7 @@
 ## Implementation guardrails
 
 Do not invent embassy phone numbers, social accounts, or country government URLs. For countries without a verified country-specific entry, show the official Malaysian diplomatic directory and explicitly label the entry as a directory/search route rather than pretending it is a direct embassy contact. Re-verify volatile links before release.
+
+## v2.14 launcher verification
+
+The preserved `assets/images/fim_malaysia_flag_logo.jpg` is a 512x512 circular Malaysian flag shield with navy field, yellow crescent/star, red-and-white stripes, and a light outline. The Android `mipmap-mdpi/ic_launcher.png` was visually checked after the scaffold repair and was still the default Flutter blue mark, so all Android density launcher icons must be regenerated from the preserved FIM shield before the final release package is made.

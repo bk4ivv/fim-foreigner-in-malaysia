@@ -1,17 +1,17 @@
 from pathlib import Path
 from PIL import Image
 
-source = Path('/home/ubuntu/upload/1c2a7097d927aa26fd4cf1611bcefebc.jpg')
 project = Path('/home/ubuntu/expat_status_checker')
 assets = project / 'assets/images'
-assets.mkdir(parents=True, exist_ok=True)
+source = assets / 'fim_malaysia_flag_logo.jpg'
 
-# Preserve the uploaded image itself for the in-app brand mark.
+if not source.exists():
+    raise FileNotFoundError(source)
+
+# The in-app brand mark is already the preserved user-provided Malaysian flag shield.
 source_image = Image.open(source).convert('RGB')
-source_image.save(assets / 'fim_malaysia_flag_logo.jpg', quality=95, optimize=True)
 
-# Android launcher resources require PNG files; these are resized copies of the
-# exact uploaded image, not a redesigned or AI-generated logo.
+# Android launcher resources are resized copies of that exact shield, not a redesigned logo.
 res_dir = project / 'android/app/src/main/res'
 for folder, size in {
     'mipmap-mdpi': 48,
@@ -21,6 +21,11 @@ for folder, size in {
     'mipmap-xxxhdpi': 192,
 }.items():
     destination = res_dir / folder / 'ic_launcher.png'
-    source_image.resize((size, size), Image.Resampling.LANCZOS).save(destination, format='PNG', optimize=True)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    source_image.resize((size, size), Image.Resampling.LANCZOS).save(
+        destination,
+        format='PNG',
+        optimize=True,
+    )
 
-print(f'prepared {assets / "fim_malaysia_flag_logo.jpg"}')
+print(f'prepared launcher icons from {source}')
