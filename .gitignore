@@ -47,3 +47,8 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Private Play upload signing material
+/android/key.properties
+/android/app/*.jks
+/android/app/*.keystore

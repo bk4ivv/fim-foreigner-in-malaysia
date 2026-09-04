@@ -410,3 +410,10 @@ This request supersedes the approved Community tab as the primary fifth navigati
 - [x] Ensure Korean, Japanese, German, French, and other major language options provide working localized navigation, learning content, support content, and service labels rather than falling back silently to English.
 - [x] Add regression coverage for CIDB routing, flight-provider entries, and major-language fallback behavior.
 - [x] Bump to v2.15.0, build and verify the updated APK, refresh the private GitHub source, and package the revised release artifacts.
+
+## First Google Play Upload Bundle — September 2026
+
+- [ ] Generate a new first-upload Android upload keystore and keep its passwords with the private release package.
+- [ ] Configure the release build for the new upload key without committing secrets or keystore material to GitHub.
+- [ ] Build and verify a signed FIM Android App Bundle (`.aab`) for Google Play Console.
+- [ ] Package the AAB, keystore backup, checksums, and Play upload instructions.
