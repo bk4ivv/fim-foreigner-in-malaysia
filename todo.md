@@ -409,4 +409,4 @@ This request supersedes the approved Community tab as the primary fifth navigati
 - [x] Expand the Trips flight providers with Cheapflights Malaysia, Mynztrip, and an additional Malaysia-legal airline or flight-booking source.
 - [x] Ensure Korean, Japanese, German, French, and other major language options provide working localized navigation, learning content, support content, and service labels rather than falling back silently to English.
 - [x] Add regression coverage for CIDB routing, flight-provider entries, and major-language fallback behavior.
-- [ ] Bump to v2.15.0, build and verify the updated APK, refresh the private GitHub source, and package the revised release artifacts.
+- [x] Bump to v2.15.0, build and verify the updated APK, refresh the private GitHub source, and package the revised release artifacts.
