@@ -10,6 +10,27 @@ import 'package:flutter/services.dart';
 AppLanguage? _appLanguageForLabelForTest(String label) {
   final normalized = label.toLowerCase();
   if (normalized == 'bengali') return AppLanguage.bangla;
+  if (normalized == 'french' || normalized == 'français') {
+    return AppLanguage.french;
+  }
+  if (normalized == 'korean' || normalized == '한국어') {
+    return AppLanguage.korean;
+  }
+  if (normalized == 'japanese' || normalized == '日本語') {
+    return AppLanguage.japanese;
+  }
+  if (normalized == 'german' || normalized == 'deutsch') {
+    return AppLanguage.german;
+  }
+  if (normalized == 'spanish' || normalized == 'español') {
+    return AppLanguage.spanish;
+  }
+  if (normalized == 'arabic' || normalized == 'العربية') {
+    return AppLanguage.arabic;
+  }
+  if (normalized == 'russian' || normalized == 'русский') {
+    return AppLanguage.russian;
+  }
   return null;
 }
 
@@ -105,7 +126,9 @@ void main() {
     expect(france.flag, '🇫🇷');
     expect(france.isMalaysiaWorkerSourceCountry, isFalse);
     expect(_appLanguageForLabelForTest('Bengali'), AppLanguage.bangla);
-    expect(_appLanguageForLabelForTest('French'), isNull);
+    expect(_appLanguageForLabelForTest('French'), AppLanguage.french);
+    expect(_appLanguageForLabelForTest('한국어'), AppLanguage.korean);
+    expect(_appLanguageForLabelForTest('日本語'), AppLanguage.japanese);
   });
 
   test(
@@ -163,6 +186,54 @@ void main() {
     expect(find.text('Plane'), findsOneWidget);
     expect(find.text('Ferry'), findsOneWidget);
     expect(find.text('Train'), findsOneWidget);
+  });
+
+  testWidgets('Plane trips expose Malaysia-relevant booking choices', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: TripsPage(language: AppLanguage.english)),
+    );
+
+    await tester.tap(find.text('Plane'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 650));
+
+    expect(find.text('Cheapflights Malaysia'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Mynztrip'),
+      280,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expect(find.text('Mynztrip'), findsOneWidget);
+    expect(find.text('Batik Air Malaysia'), findsOneWidget);
+    expect(find.text('Trip.com Malaysia'), findsOneWidget);
+  });
+
+  test('CIDB keeps the official CIMS URL for in-app WebView routing', () {
+    final cidb = services.firstWhere((service) => service.id == ServiceId.cidb);
+    expect(cidb.url, startsWith('https://cims.cidb.gov.my/'));
+    expect(cidb.url, contains('/pbsearch/Forms/Transactions/search.aspx'));
+  });
+
+  test('major language modes have app, support, and resource coverage', () {
+    const majorLanguages = <AppLanguage>[
+      AppLanguage.korean,
+      AppLanguage.japanese,
+      AppLanguage.german,
+      AppLanguage.french,
+      AppLanguage.spanish,
+      AppLanguage.arabic,
+      AppLanguage.russian,
+    ];
+
+    for (final language in majorLanguages) {
+      expect(appCopies[language]?.languageName, isNotEmpty);
+      expect(firstUseCopies[language]?.continueLabel, isNotEmpty);
+      expect(countryHubProfiles[language], isNotNull);
+      expect(countryResourceProfiles[language], isNotNull);
+      expect(countryGovernmentPortals[language], startsWith('https://'));
+    }
   });
 
   testWidgets('Privacy is a dedicated destination', (tester) async {

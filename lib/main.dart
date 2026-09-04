@@ -66,6 +66,13 @@ enum AppLanguage {
   chinese,
   vietnamese,
   sinhala,
+  korean,
+  japanese,
+  german,
+  french,
+  spanish,
+  arabic,
+  russian,
 }
 
 class CountryOption {
@@ -143,6 +150,20 @@ const _languageAliases = <String, AppLanguage>{
   'mandarin': AppLanguage.chinese,
   'vietnamese': AppLanguage.vietnamese,
   'sinhala': AppLanguage.sinhala,
+  'korean': AppLanguage.korean,
+  '한국어': AppLanguage.korean,
+  'japanese': AppLanguage.japanese,
+  '日本語': AppLanguage.japanese,
+  'german': AppLanguage.german,
+  'deutsch': AppLanguage.german,
+  'french': AppLanguage.french,
+  'français': AppLanguage.french,
+  'spanish': AppLanguage.spanish,
+  'español': AppLanguage.spanish,
+  'arabic': AppLanguage.arabic,
+  'العربية': AppLanguage.arabic,
+  'russian': AppLanguage.russian,
+  'русский': AppLanguage.russian,
 };
 
 AppLanguage? _appLanguageForLabel(String label) =>
@@ -560,6 +581,173 @@ const appCopies = <AppLanguage, AppCopy>{
     reload: 'පිටුව නැවත පූරණය කරන්න',
     contactTitle: 'email සම්බන්ධතාව',
   ),
+  AppLanguage.korean: AppCopy(
+    languageName: '한국어',
+    direction: TextDirection.ltr,
+    languagePageTitle: '언어를 선택하세요',
+    languagePageSubtitle: '가장 편한 언어로 시작하세요.',
+    chooseLanguage: '근로자를 위한 언어',
+    servicePageTitle: '공식 확인을 더 쉽게',
+    servicePageSubtitle: '필요한 서비스를 선택하세요. 공식 말레이시아 페이지가 앱 안에서 열립니다.',
+    visaTitle: '비자 상태',
+    visaDescription: '비자 신청과 이민국 상태를 확인하세요.',
+    fomemaTitle: 'FOMEMA 확인',
+    fomemaDescription: 'FOMEMA 건강검진 상태를 확인하세요.',
+    officialService: '말레이시아 공식 서비스',
+    adTitle: '광고',
+    adSubtitle: '향후 파트너 또는 근로자에게 유용한 정보가 표시됩니다.',
+    creditTitle: '근로자를 위해 정성껏 제작',
+    creatorCredit:
+        '말레이시아에서 근무하는 외국인 근로자 Khandaker Md Borhan Kabir (@bk4ivv)가 제작했습니다.',
+    contact: '이메일로 문의',
+    backToLanguages: '언어 변경',
+    backToServices: '서비스로 돌아가기',
+    reload: '페이지 새로고침',
+    contactTitle: '이메일 문의',
+  ),
+  AppLanguage.japanese: AppCopy(
+    languageName: '日本語',
+    direction: TextDirection.ltr,
+    languagePageTitle: '言語を選択',
+    languagePageSubtitle: '使いやすい言語から始めましょう。',
+    chooseLanguage: '働く人のための言語',
+    servicePageTitle: '公式確認をもっと簡単に',
+    servicePageSubtitle: '必要なサービスを選択してください。公式マレーシアページがアプリ内で開きます。',
+    visaTitle: 'ビザの状況',
+    visaDescription: 'ビザ申請と入国管理の状況を確認します。',
+    fomemaTitle: 'FOMEMA確認',
+    fomemaDescription: 'FOMEMA健康診断の状況を確認します。',
+    officialService: 'マレーシア公式サービス',
+    adTitle: '広告',
+    adSubtitle: '今後のパートナーや役立つ情報のためのスペースです。',
+    creditTitle: '働く人のために丁寧に制作',
+    creatorCredit:
+        'マレーシアで働く外国人労働者 Khandaker Md Borhan Kabir (@bk4ivv) が制作しました。',
+    contact: 'メールで連絡',
+    backToLanguages: '言語を変更',
+    backToServices: 'サービスに戻る',
+    reload: 'ページを再読み込み',
+    contactTitle: 'メール連絡',
+  ),
+  AppLanguage.german: AppCopy(
+    languageName: 'Deutsch',
+    direction: TextDirection.ltr,
+    languagePageTitle: 'Sprache auswählen',
+    languagePageSubtitle:
+        'Beginnen Sie mit der Sprache, die für Sie am bequemsten ist.',
+    chooseLanguage: 'Sprachen für Arbeitnehmer',
+    servicePageTitle: 'Offizielle Prüfungen, einfacher gemacht',
+    servicePageSubtitle: 'Wählen Sie den gewünschten Dienst. Die offizielle Malaysia-Seite öffnet sich in der App.',
+    visaTitle: 'Visastatus',
+    visaDescription: 'Visumantrag und Einwanderungsstatus prüfen.',
+    fomemaTitle: 'FOMEMA-Prüfung',
+    fomemaDescription: 'Status der FOMEMA-Gesundheitsuntersuchung prüfen.',
+    officialService: 'Offizieller malaysischer Dienst',
+    adTitle: 'Werbung',
+    adSubtitle: 'Platz für künftige Partner oder nützliche Informationen für Arbeitnehmer.',
+    creditTitle: 'Mit Sorgfalt für Arbeitnehmer entwickelt',
+    creatorCredit: 'Erstellt von Khandaker Md Borhan Kabir (@bk4ivv), einem ausländischen Arbeitnehmer und Metal-CNC-Bediener in Malaysia.',
+    contact: 'Per E-Mail kontaktieren',
+    backToLanguages: 'Sprache ändern',
+    backToServices: 'Zurück zu den Diensten',
+    reload: 'Seite neu laden',
+    contactTitle: 'E-Mail-Kontakt',
+  ),
+  AppLanguage.french: AppCopy(
+    languageName: 'Français',
+    direction: TextDirection.ltr,
+    languagePageTitle: 'Choisissez votre langue',
+    languagePageSubtitle:
+        'Commencez avec la langue qui vous convient le mieux.',
+    chooseLanguage: 'Langues pour les travailleurs',
+    servicePageTitle: 'Vérifications officielles, simplifiées',
+    servicePageSubtitle: 'Choisissez le service dont vous avez besoin. La page officielle de Malaisie s’ouvre dans l’application.',
+    visaTitle: 'Statut du visa',
+    visaDescription:
+        'Vérifiez la demande de visa et le statut de l’immigration.',
+    fomemaTitle: 'Vérification FOMEMA',
+    fomemaDescription: 'Vérifiez le statut de l’examen médical FOMEMA.',
+    officialService: 'Service officiel de Malaisie',
+    adTitle: 'Publicité',
+    adSubtitle: 'Espace réservé à un futur partenaire ou à des informations utiles aux travailleurs.',
+    creditTitle: 'Créée avec soin pour les travailleurs',
+    creatorCredit: 'Créée par Khandaker Md Borhan Kabir (@bk4ivv), travailleur étranger et opérateur CNC métal en Malaisie.',
+    contact: 'Contacter par e-mail',
+    backToLanguages: 'Changer de langue',
+    backToServices: 'Retour aux services',
+    reload: 'Recharger la page',
+    contactTitle: 'Contact e-mail',
+  ),
+  AppLanguage.spanish: AppCopy(
+    languageName: 'Español',
+    direction: TextDirection.ltr,
+    languagePageTitle: 'Elige tu idioma',
+    languagePageSubtitle: 'Empieza con el idioma que te resulte más cómodo.',
+    chooseLanguage: 'Idiomas para trabajadores',
+    servicePageTitle: 'Comprobaciones oficiales, más fáciles',
+    servicePageSubtitle: 'Elige el servicio que necesitas. La página oficial de Malasia se abre dentro de la aplicación.',
+    visaTitle: 'Estado del visado',
+    visaDescription: 'Consulta la solicitud de visado y el estado migratorio.',
+    fomemaTitle: 'Consulta FOMEMA',
+    fomemaDescription: 'Consulta el estado del examen médico FOMEMA.',
+    officialService: 'Servicio oficial de Malasia',
+    adTitle: 'Publicidad',
+    adSubtitle: 'Espacio reservado para futuros socios o información útil para trabajadores.',
+    creditTitle: 'Creada con cuidado para trabajadores',
+    creatorCredit: 'Creada por Khandaker Md Borhan Kabir (@bk4ivv), trabajador extranjero y operador de CNC metal en Malasia.',
+    contact: 'Contactar por correo',
+    backToLanguages: 'Cambiar idioma',
+    backToServices: 'Volver a servicios',
+    reload: 'Recargar página',
+    contactTitle: 'Contacto por correo',
+  ),
+  AppLanguage.arabic: AppCopy(
+    languageName: 'العربية',
+    direction: TextDirection.rtl,
+    languagePageTitle: 'اختر لغتك',
+    languagePageSubtitle: 'ابدأ باللغة التي تشعر معها بالراحة.',
+    chooseLanguage: 'لغات للعمال',
+    servicePageTitle: 'فحوصات رسمية بطريقة أسهل',
+    servicePageSubtitle: 'اختر الخدمة التي تحتاجها. ستفتح الصفحة الماليزية الرسمية داخل التطبيق.',
+    visaTitle: 'حالة التأشيرة',
+    visaDescription: 'تحقق من طلب التأشيرة وحالة الهجرة.',
+    fomemaTitle: 'فحص FOMEMA',
+    fomemaDescription: 'تحقق من حالة الفحص الطبي FOMEMA.',
+    officialService: 'خدمة ماليزية رسمية',
+    adTitle: 'إعلان',
+    adSubtitle: 'مساحة لشريك مستقبلي أو معلومات مفيدة للعمال.',
+    creditTitle: 'صُنع للعمال بعناية',
+    creatorCredit: 'أنشأه Khandaker Md Borhan Kabir (@bk4ivv)، عامل أجنبي ومشغل CNC للمعادن في ماليزيا.',
+    contact: 'تواصل عبر البريد الإلكتروني',
+    backToLanguages: 'تغيير اللغة',
+    backToServices: 'العودة إلى الخدمات',
+    reload: 'إعادة تحميل الصفحة',
+    contactTitle: 'التواصل عبر البريد',
+  ),
+  AppLanguage.russian: AppCopy(
+    languageName: 'Русский',
+    direction: TextDirection.ltr,
+    languagePageTitle: 'Выберите язык',
+    languagePageSubtitle: 'Начните с языка, который вам удобнее.',
+    chooseLanguage: 'Языки для работников',
+    servicePageTitle: 'Официальные проверки проще',
+    servicePageSubtitle: 'Выберите нужную услугу. Официальная страница Малайзии откроется внутри приложения.',
+    visaTitle: 'Статус визы',
+    visaDescription: 'Проверьте заявление на визу и иммиграционный статус.',
+    fomemaTitle: 'Проверка FOMEMA',
+    fomemaDescription: 'Проверьте статус медицинского обследования FOMEMA.',
+    officialService: 'Официальная служба Малайзии',
+    adTitle: 'Реклама',
+    adSubtitle:
+        'Место для будущего партнёра или полезной информации для работников.',
+    creditTitle: 'Создано с заботой о работниках',
+    creatorCredit: 'Создано Khandaker Md Borhan Kabir (@bk4ivv), иностранным работником и оператором металлообрабатывающего ЧПУ в Малайзии.',
+    contact: 'Связаться по электронной почте',
+    backToLanguages: 'Изменить язык',
+    backToServices: 'Вернуться к услугам',
+    reload: 'Перезагрузить страницу',
+    contactTitle: 'Контакт по электронной почте',
+  ),
 };
 
 class FirstUseCopy {
@@ -684,6 +872,55 @@ const firstUseCopies = <AppLanguage, FirstUseCopy>{
     videoPending: 'වීඩියෝ මාර්ගෝපදේශය ඉක්මනින් මෙහි එක් කරනු ඇත.',
     continueAnyway: 'කෙසේ වෙතත් ඉදිරියට යන්න',
   ),
+  AppLanguage.korean: FirstUseCopy(
+    question: '이 앱을 사용하는 방법을 알고 있나요?',
+    continueLabel: '네, 앱으로 계속하기',
+    videoLabel: '사용 설명서 영상 보기',
+    videoPending: '사용 설명서 영상이 곧 추가됩니다.',
+    continueAnyway: '그래도 계속하기',
+  ),
+  AppLanguage.japanese: FirstUseCopy(
+    question: 'このアプリの使い方を知っていますか？',
+    continueLabel: 'はい、アプリを続ける',
+    videoLabel: '利用ガイド動画を見る',
+    videoPending: '利用ガイド動画は近日追加されます。',
+    continueAnyway: 'そのまま続ける',
+  ),
+  AppLanguage.german: FirstUseCopy(
+    question: 'Wissen Sie, wie diese App funktioniert?',
+    continueLabel: 'Ja, zur App weiter',
+    videoLabel: 'Videoanleitung ansehen',
+    videoPending: 'Die Videoanleitung wird bald hinzugefügt.',
+    continueAnyway: 'Trotzdem fortfahren',
+  ),
+  AppLanguage.french: FirstUseCopy(
+    question: 'Savez-vous comment utiliser cette application ?',
+    continueLabel: 'Oui, continuer vers l’application',
+    videoLabel: 'Voir la vidéo du guide utilisateur',
+    videoPending: 'La vidéo du guide sera bientôt ajoutée.',
+    continueAnyway: 'Continuer quand même',
+  ),
+  AppLanguage.spanish: FirstUseCopy(
+    question: '¿Sabes cómo usar esta aplicación?',
+    continueLabel: 'Sí, continuar a la aplicación',
+    videoLabel: 'Ver el vídeo de la guía',
+    videoPending: 'El vídeo de la guía se añadirá pronto.',
+    continueAnyway: 'Continuar de todos modos',
+  ),
+  AppLanguage.arabic: FirstUseCopy(
+    question: 'هل تعرف كيفية استخدام هذا التطبيق؟',
+    continueLabel: 'نعم، متابعة إلى التطبيق',
+    videoLabel: 'مشاهدة فيديو دليل المستخدم',
+    videoPending: 'ستتم إضافة فيديو الدليل قريباً.',
+    continueAnyway: 'المتابعة على أي حال',
+  ),
+  AppLanguage.russian: FirstUseCopy(
+    question: 'Вы знаете, как пользоваться этим приложением?',
+    continueLabel: 'Да, продолжить в приложении',
+    videoLabel: 'Посмотреть видеоинструкцию',
+    videoPending: 'Видеоинструкция скоро будет добавлена.',
+    continueAnyway: 'Всё равно продолжить',
+  ),
 };
 
 class LanguageVisual {
@@ -773,6 +1010,41 @@ const languageVisuals = <AppLanguage, LanguageVisual>{
     accent: Color(0xFF95583B),
     wash: Color(0xFFF6EAE3),
     motif: Icons.spa_outlined,
+  ),
+  AppLanguage.korean: LanguageVisual(
+    accent: Color(0xFF3A6EA5),
+    wash: Color(0xFFE7F0F9),
+    motif: Icons.waves_rounded,
+  ),
+  AppLanguage.japanese: LanguageVisual(
+    accent: Color(0xFFB23A48),
+    wash: Color(0xFFF9E7EA),
+    motif: Icons.local_florist_outlined,
+  ),
+  AppLanguage.german: LanguageVisual(
+    accent: Color(0xFF8A6E2F),
+    wash: Color(0xFFF7F0DD),
+    motif: Icons.architecture_rounded,
+  ),
+  AppLanguage.french: LanguageVisual(
+    accent: Color(0xFF4966A8),
+    wash: Color(0xFFE9EEFA),
+    motif: Icons.auto_awesome_rounded,
+  ),
+  AppLanguage.spanish: LanguageVisual(
+    accent: Color(0xFFB75A2B),
+    wash: Color(0xFFF9ECE2),
+    motif: Icons.wb_sunny_outlined,
+  ),
+  AppLanguage.arabic: LanguageVisual(
+    accent: Color(0xFF2C806A),
+    wash: Color(0xFFE5F3EE),
+    motif: Icons.mosque_outlined,
+  ),
+  AppLanguage.russian: LanguageVisual(
+    accent: Color(0xFF4D659C),
+    wash: Color(0xFFE8EDF8),
+    motif: Icons.ac_unit_rounded,
   ),
 };
 
@@ -1020,6 +1292,55 @@ _ExitCopy _exitCopyFor(AppLanguage? language) {
         'ඔබට යෙදුම දිගටම භාවිතා කිරීමට හෝ දැන් පිටවීමට හැකිය.',
         'රැඳී සිටින්න',
         'පිටවන්න',
+      );
+    case AppLanguage.korean:
+      return const _ExitCopy(
+        '앱을 종료할까요?',
+        '앱을 계속 사용하거나 지금 종료할 수 있습니다.',
+        '계속 사용',
+        '종료',
+      );
+    case AppLanguage.japanese:
+      return const _ExitCopy(
+        'アプリを終了しますか？',
+        'アプリを続けて使うか、今すぐ終了できます。',
+        '続ける',
+        '終了',
+      );
+    case AppLanguage.german:
+      return const _ExitCopy(
+        'FIM beenden?',
+        'Sie können die App weiter verwenden oder jetzt beenden.',
+        'Bleiben',
+        'Beenden',
+      );
+    case AppLanguage.french:
+      return const _ExitCopy(
+        'Quitter FIM ?',
+        'Vous pouvez continuer à utiliser l’application ou quitter maintenant.',
+        'Rester',
+        'Quitter',
+      );
+    case AppLanguage.spanish:
+      return const _ExitCopy(
+        '¿Salir de FIM?',
+        'Puedes seguir usando la aplicación o salir ahora.',
+        'Quedarme',
+        'Salir',
+      );
+    case AppLanguage.arabic:
+      return const _ExitCopy(
+        'الخروج من التطبيق؟',
+        'يمكنك متابعة استخدام التطبيق أو الخروج الآن.',
+        'البقاء',
+        'الخروج',
+      );
+    case AppLanguage.russian:
+      return const _ExitCopy(
+        'Выйти из FIM?',
+        'Можно продолжить пользоваться приложением или выйти сейчас.',
+        'Остаться',
+        'Выйти',
       );
     case AppLanguage.english:
     case null:
@@ -1440,7 +1761,7 @@ class _CivicPageTransitionsBuilder extends PageTransitionsBuilder {
   }
 }
 
-class CivicHeroPanel extends StatelessWidget {
+class CivicHeroPanel extends StatefulWidget {
   const CivicHeroPanel({
     super.key,
     required this.child,
@@ -1451,7 +1772,38 @@ class CivicHeroPanel extends StatelessWidget {
   final Color accent;
 
   @override
+  State<CivicHeroPanel> createState() => _CivicHeroPanelState();
+}
+
+class _CivicHeroPanelState extends State<CivicHeroPanel>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _auraController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 7200),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (!WidgetsBinding
+        .instance
+        .platformDispatcher
+        .accessibilityFeatures
+        .disableAnimations) {
+      _auraController.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _auraController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final motionDisabled =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -1511,16 +1863,84 @@ class CivicHeroPanel extends StatelessWidget {
               ),
             ),
           ),
+          AnimatedBuilder(
+            animation: _auraController,
+            builder: (context, _) {
+              final t = motionDisabled ? 0.5 : _auraController.value;
+              return Positioned(
+                left: -34 + (t - 0.5) * 16,
+                bottom: -62 - (t - 0.5) * 14,
+                child: Transform.rotate(
+                  angle: (t - 0.5) * 0.08,
+                  child: _CulturalSignatureMark(accent: widget.accent),
+                ),
+              );
+            },
+          ),
           Positioned(
             left: 20,
             top: 0,
-            child: Container(width: 56, height: 3, color: accent),
+            child: Container(width: 56, height: 3, color: widget.accent),
           ),
           Padding(
             padding: const EdgeInsets.all(20),
-            child: CivicPageReveal(child: child),
+            child: CivicPageReveal(child: widget.child),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CulturalSignatureMark extends StatelessWidget {
+  const _CulturalSignatureMark({required this.accent});
+
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: 0.17,
+      child: SizedBox(
+        width: 148,
+        height: 96,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            ClipOval(
+              child: Image.asset(
+                'assets/images/culture_lrt_heritage.jpg',
+                width: 116,
+                height: 116,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppPalette.flagNavy.withValues(alpha: 0.75),
+                border: Border.all(
+                  color: accent.withValues(alpha: 0.72),
+                  width: 2,
+                ),
+              ),
+              child: const Center(
+                child: Text(
+                  'FIM',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2.2,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2527,6 +2947,13 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
       AppLanguage.chinese: ['首页', '学习', '帮助与信息'],
       AppLanguage.vietnamese: ['Trang chủ', 'Học', 'Trợ giúp & thông tin'],
       AppLanguage.sinhala: ['මුල් පිටුව', 'ඉගෙනීම', 'උදව් සහ තොරතුරු'],
+      AppLanguage.korean: ['홈', '학습', '도움말 및 정보'],
+      AppLanguage.japanese: ['ホーム', '学習', 'ヘルプと情報'],
+      AppLanguage.german: ['Start', 'Lernen', 'Hilfe & Info'],
+      AppLanguage.french: ['Accueil', 'Apprendre', 'Aide et infos'],
+      AppLanguage.spanish: ['Inicio', 'Aprender', 'Ayuda e información'],
+      AppLanguage.arabic: ['الرئيسية', 'تعلّم', 'المساعدة والمعلومات'],
+      AppLanguage.russian: ['Главная', 'Учёба', 'Помощь и информация'],
     };
     return labels[widget.language]?[index] ?? '';
   }
@@ -2753,10 +3180,10 @@ class _WorkerDashboardTab extends StatelessWidget {
             icon: Icons.public_rounded,
             title: language == AppLanguage.bangla
                 ? 'বাংলা সহায়তা কেন্দ্র'
-                : countryHubProfiles[language]!.hubTitle,
+                : _countryHubProfileFor(language).hubTitle,
             subtitle: language == AppLanguage.bangla
                 ? 'শেখা, সহায়তা, সোনার রেফারেন্স ও সরকারি তথ্য'
-                : countryHubProfiles[language]!.hubSubtitle,
+                : _countryHubProfileFor(language).hubSubtitle,
             onTap: onOpenCountryHub,
           ),
           const SizedBox(height: 12),
@@ -2808,6 +3235,26 @@ const _tripProviders = <_TripMode, List<_TripProvider>>{
       name: 'AirAsia',
       url: 'https://www.airasia.com/',
       note: 'Official AirAsia booking and flight search.',
+    ),
+    _TripProvider(
+      name: 'Batik Air Malaysia',
+      url: 'https://www.malindoair.com/',
+      note: 'Malaysia-based airline booking and flight information.',
+    ),
+    _TripProvider(
+      name: 'Cheapflights Malaysia',
+      url: 'https://www.cheapflights.com.my/',
+      note: 'Compare flight prices and routes available from Malaysia.',
+    ),
+    _TripProvider(
+      name: 'Mynztrip',
+      url: 'https://mynztrip.com/',
+      note: 'Flight and travel booking option for Malaysia-based travellers.',
+    ),
+    _TripProvider(
+      name: 'Trip.com Malaysia',
+      url: 'https://my.trip.com/?locale=en-MY&curr=MYR',
+      note: 'Malaysia-localized flight search and ticket booking.',
     ),
     _TripProvider(
       name: 'Google Flights',
@@ -3318,7 +3765,7 @@ class _LearningTab extends StatelessWidget {
     final isBangla = language == AppLanguage.bangla;
     final profile = language == AppLanguage.english
         ? null
-        : countryHubProfiles[language];
+        : _countryHubProfileFor(language);
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
       children: [
@@ -3566,10 +4013,10 @@ class _HelpTab extends StatelessWidget {
               ? 'দেশভিত্তিক সহায়তা'
               : isEnglish
               ? 'Country support'
-              : countryHubProfiles[language]!.supportTitle,
+              : _countryHubProfileFor(language).supportTitle,
           subtitle: isEnglish
               ? 'Choose a language to access country-specific sources.'
-              : countryHubProfiles[language]!.supportSubtitle,
+              : _countryHubProfileFor(language).supportSubtitle,
           onTap: isEnglish ? () {} : onOpenCountryHub,
         ),
         const SizedBox(height: 12),
@@ -3835,7 +4282,7 @@ class ServiceHomePage extends StatelessWidget {
               const SizedBox(height: 27),
               if (language != AppLanguage.english) ...[
                 _LocalizedPriorityEntry(
-                  profile: countryHubProfiles[language]!,
+                  profile: _countryHubProfileFor(language),
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => language == AppLanguage.bangla
@@ -4444,6 +4891,20 @@ class _TranslationHubPageState extends State<TranslationHubPage> {
         return 'vi';
       case AppLanguage.sinhala:
         return 'si';
+      case AppLanguage.korean:
+        return 'ko';
+      case AppLanguage.japanese:
+        return 'ja';
+      case AppLanguage.german:
+        return 'de';
+      case AppLanguage.french:
+        return 'fr';
+      case AppLanguage.spanish:
+        return 'es';
+      case AppLanguage.arabic:
+        return 'ar';
+      case AppLanguage.russian:
+        return 'ru';
     }
   }
 
@@ -4580,6 +5041,20 @@ String _exchangeTitleFor(AppLanguage language) {
       return 'Tỷ giá trực tiếp';
     case AppLanguage.sinhala:
       return 'සජීවී විනිමය අනුපාත';
+    case AppLanguage.korean:
+      return '실시간 환율';
+    case AppLanguage.japanese:
+      return 'リアルタイム為替レート';
+    case AppLanguage.german:
+      return 'Live-Wechselkurse';
+    case AppLanguage.french:
+      return 'Taux de change en direct';
+    case AppLanguage.spanish:
+      return 'Tipos de cambio en directo';
+    case AppLanguage.arabic:
+      return 'أسعار الصرف المباشرة';
+    case AppLanguage.russian:
+      return 'Курсы валют в реальном времени';
     case AppLanguage.english:
       return 'Live exchange rates';
   }
@@ -6435,6 +6910,15 @@ class CountryResourceProfile {
   final String? officialSocialUrl;
 }
 
+CountryHubProfile _countryHubProfileFor(AppLanguage language) =>
+    countryHubProfiles[language] ?? _genericCountryHubProfile;
+
+const _genericCountryResourceProfile = CountryResourceProfile(
+  goldReferenceUrl: 'https://www.goldprice.org/',
+  goldReferenceName: 'International gold-price reference',
+  officialSocialUrl: null,
+);
+
 const countryResourceProfiles = <AppLanguage, CountryResourceProfile>{
   AppLanguage.bangla: CountryResourceProfile(
     goldReferenceUrl: 'https://smsdeenjewels.com.my/',
@@ -6506,7 +6990,37 @@ const countryResourceProfiles = <AppLanguage, CountryResourceProfile>{
     goldReferenceName: 'Sri Lanka gold market reference',
     officialSocialUrl: 'https://www.facebook.com/srilankahcmalaysia/',
   ),
+  AppLanguage.korean: CountryResourceProfile(
+    goldReferenceUrl: 'https://goldprice.org/gold-price-south-korea.html',
+    goldReferenceName: 'South Korea gold market reference',
+  ),
+  AppLanguage.japanese: CountryResourceProfile(
+    goldReferenceUrl: 'https://goldprice.org/gold-price-japan.html',
+    goldReferenceName: 'Japan gold market reference',
+  ),
+  AppLanguage.german: CountryResourceProfile(
+    goldReferenceUrl: 'https://goldprice.org/gold-price-germany.html',
+    goldReferenceName: 'Germany gold market reference',
+  ),
+  AppLanguage.french: CountryResourceProfile(
+    goldReferenceUrl: 'https://goldprice.org/gold-price-france.html',
+    goldReferenceName: 'France gold market reference',
+  ),
+  AppLanguage.spanish: CountryResourceProfile(
+    goldReferenceUrl: 'https://goldprice.org/gold-price-spain.html',
+    goldReferenceName: 'Spain gold market reference',
+  ),
+  AppLanguage.arabic: CountryResourceProfile(
+    goldReferenceUrl: 'https://www.goldprice.org/',
+    goldReferenceName: 'International gold-price reference',
+  ),
+  AppLanguage.russian: CountryResourceProfile(
+    goldReferenceUrl: 'https://goldprice.org/gold-price-russia.html',
+    goldReferenceName: 'Russia gold market reference',
+  ),
 };
+CountryResourceProfile _countryResourceProfileFor(AppLanguage language) =>
+    countryResourceProfiles[language] ?? _genericCountryResourceProfile;
 
 const countryGovernmentPortals = <AppLanguage, String>{
   AppLanguage.bangla: 'https://bangladesh.gov.bd/',
@@ -6523,7 +7037,19 @@ const countryGovernmentPortals = <AppLanguage, String>{
   AppLanguage.chinese: 'https://www.gov.cn/',
   AppLanguage.vietnamese: 'https://chinhphu.vn/',
   AppLanguage.sinhala: 'https://www.gov.lk/',
+  AppLanguage.korean: 'https://www.korea.net/',
+  AppLanguage.japanese: 'https://www.japan.go.jp/',
+  AppLanguage.german: 'https://www.bundesregierung.de/breg-en',
+  AppLanguage.french: 'https://www.gouvernement.fr/en',
+  AppLanguage.spanish: 'https://administracion.gob.es/',
+  AppLanguage.arabic:
+      'https://www.kln.gov.my/web/guest/foreign-missions-in-malaysia',
+  AppLanguage.russian: 'https://government.ru/en/',
 };
+const _foreignMissionsDirectoryUrl =
+    'https://www.kln.gov.my/web/guest/foreign-missions-in-malaysia';
+String _countryGovernmentPortalFor(AppLanguage language) =>
+    countryGovernmentPortals[language] ?? _foreignMissionsDirectoryUrl;
 
 String _localizedGoldTitle(AppLanguage language) => switch (language) {
   AppLanguage.bangla => 'দেশের সোনার রেফারেন্স',
@@ -6540,6 +7066,13 @@ String _localizedGoldTitle(AppLanguage language) => switch (language) {
   AppLanguage.chinese => '黄金价格参考',
   AppLanguage.vietnamese => 'Tham khảo giá vàng',
   AppLanguage.sinhala => 'රන් මිල යොමුව',
+  AppLanguage.korean => '금 가격 참고',
+  AppLanguage.japanese => '金価格の参考',
+  AppLanguage.german => 'Goldpreis-Referenz',
+  AppLanguage.french => 'Référence du prix de l’or',
+  AppLanguage.spanish => 'Referencia del precio del oro',
+  AppLanguage.arabic => 'مرجع سعر الذهب',
+  AppLanguage.russian => 'Справка о цене золота',
   AppLanguage.english => 'Gold price reference',
 };
 
@@ -6559,6 +7092,13 @@ String _localizedGovernmentPortalTitle(AppLanguage language) =>
       AppLanguage.chinese => '本国政府门户网站',
       AppLanguage.vietnamese => 'Cổng thông tin chính phủ',
       AppLanguage.sinhala => 'රජයේ නිල ද්වාරය',
+      AppLanguage.korean => '본국 정부 포털',
+      AppLanguage.japanese => '母国政府ポータル',
+      AppLanguage.german => 'Regierungsportal des Heimatlandes',
+      AppLanguage.french => 'Portail gouvernemental du pays d’origine',
+      AppLanguage.spanish => 'Portal gubernamental del país de origen',
+      AppLanguage.arabic => 'بوابة حكومة بلدك',
+      AppLanguage.russian => 'Правительственный портал страны',
       AppLanguage.english => 'Home-country government portal',
     };
 
@@ -6578,6 +7118,13 @@ String _localizedOfficialSocialLabel(AppLanguage language) =>
       AppLanguage.chinese => '官方 Facebook',
       AppLanguage.vietnamese => 'Facebook chính thức',
       AppLanguage.sinhala => 'නිල Facebook',
+      AppLanguage.korean => '공식 Facebook',
+      AppLanguage.japanese => '公式 Facebook',
+      AppLanguage.german => 'Offizielles Facebook',
+      AppLanguage.french => 'Facebook officiel',
+      AppLanguage.spanish => 'Facebook oficial',
+      AppLanguage.arabic => 'فيسبوك الرسمي',
+      AppLanguage.russian => 'Официальный Facebook',
       AppLanguage.english => 'Official Facebook',
     };
 
@@ -6613,6 +7160,27 @@ Future<void> openAppDestination(
     );
   }
 }
+
+const _genericCountryHubProfile = CountryHubProfile(
+  hubTitle: 'Support',
+  hubSubtitle: 'Official country support, Malay learning, and worker guidance',
+  heroTitle: 'Handle important tasks with confidence',
+  heroBody: 'Use official Malaysian services, the Malay learning library, and verified country support routes.',
+  serviceGuideTitle: 'Before using an official service',
+  serviceAdvice: 'Keep your passport and reference details ready. Enter personal information only on official websites.',
+  phrasebookTitle: 'Useful Malay phrases',
+  phrasebookSubtitle: 'Short phrases for work, clinics, and urgent situations',
+  primaryMeaning: 'I need help.',
+  emergencyMeaning: 'Please help, this is an emergency.',
+  supportTitle: 'Country support',
+  supportSubtitle: 'Official embassy and government routes',
+  supportName: 'Official foreign-mission directory in Malaysia',
+  supportDescription: 'Use the official directory to find your embassy or high commission in Malaysia.',
+  supportUrl: 'https://www.kln.gov.my/web/guest/foreign-missions-in-malaysia',
+  workerTitle: 'Work problem or complaint',
+  workerBody: 'Keep your employment documents and use the official Malaysian labour channels for help.',
+  openOfficialLabel: 'Open official page',
+);
 
 const countryHubProfiles = <AppLanguage, CountryHubProfile>{
   AppLanguage.bangla: CountryHubProfile(
@@ -6917,6 +7485,13 @@ const countryHubProfiles = <AppLanguage, CountryHubProfile>{
     workerBody: 'රැකියා ලේඛන තබාගෙන මැලේසියානු JTK නිල මාර්ගයෙන් සහාය ගන්න.',
     openOfficialLabel: 'නිල පිටුව විවෘත කරන්න',
   ),
+  AppLanguage.korean: _genericCountryHubProfile,
+  AppLanguage.japanese: _genericCountryHubProfile,
+  AppLanguage.german: _genericCountryHubProfile,
+  AppLanguage.french: _genericCountryHubProfile,
+  AppLanguage.spanish: _genericCountryHubProfile,
+  AppLanguage.arabic: _genericCountryHubProfile,
+  AppLanguage.russian: _genericCountryHubProfile,
 };
 
 class GlobalCountrySupportPage extends StatelessWidget {
@@ -7180,7 +7755,7 @@ class CountryPriorityHubPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final profile = countryHubProfiles[language]!;
+    final profile = _countryHubProfileFor(language);
     final copy = appCopies[language]!;
     final countryLabel = country == null
         ? null
@@ -7276,7 +7851,7 @@ class CountryPriorityHubPage extends StatelessWidget {
               number: '05',
               icon: Icons.workspace_premium_outlined,
               title: _localizedGoldTitle(language),
-              subtitle: countryResourceProfiles[language]!.goldReferenceName,
+              subtitle: _countryResourceProfileFor(language).goldReferenceName,
               color: AppPalette.ink,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
@@ -7297,7 +7872,7 @@ class CountryPriorityHubPage extends StatelessWidget {
                   ? () => openWebsiteInApp(
                       context,
                       title: _localizedGovernmentPortalTitle(language),
-                      url: countryGovernmentPortals[language]!,
+                      url: _countryGovernmentPortalFor(language),
                       copy: copy,
                     )
                   : () => openWebsiteInApp(
@@ -7567,6 +8142,13 @@ String _learningSearchHint(AppLanguage language) => switch (language) {
   AppLanguage.khmer => 'ស្វែងរកពាក្យ ឬប្រយោគម៉ាឡេ',
   AppLanguage.filipino => 'Maghanap ng salitang o pangungusap sa Malay',
   AppLanguage.sinhala => 'මැලේ වචන හෝ වාක්‍ය සොයන්න',
+  AppLanguage.korean => '말레이어 단어 또는 문장 검색',
+  AppLanguage.japanese => 'マレー語の単語や文を検索',
+  AppLanguage.german => 'Malaiische Wörter oder Sätze suchen',
+  AppLanguage.french => 'Rechercher des mots ou phrases malais',
+  AppLanguage.spanish => 'Buscar palabras o frases en malayo',
+  AppLanguage.arabic => 'ابحث عن كلمات أو عبارات ملايوية',
+  AppLanguage.russian => 'Поиск малайских слов или фраз',
   AppLanguage.english => 'Search Malay words or phrases',
 };
 
@@ -7585,6 +8167,13 @@ String _learningNoMatch(AppLanguage language) => switch (language) {
   AppLanguage.khmer => 'រកមិនឃើញលទ្ធផលដែលត្រូវគ្នា។',
   AppLanguage.filipino => 'Walang nahanap na tugma.',
   AppLanguage.sinhala => 'ගැළපෙන කිසිවක් හමු නොවීය.',
+  AppLanguage.korean => '일치하는 말레이어 표현이 없습니다.',
+  AppLanguage.japanese => '一致するマレー語の表現が見つかりません。',
+  AppLanguage.german => 'Keine passende malaiische Phrase gefunden.',
+  AppLanguage.french => 'Aucune phrase malaise correspondante trouvée.',
+  AppLanguage.spanish => 'No se encontró ninguna frase en malayo.',
+  AppLanguage.arabic => 'لم يتم العثور على عبارة ملايوية مطابقة.',
+  AppLanguage.russian => 'Подходящая малайская фраза не найдена.',
   AppLanguage.english => 'No matching Malay phrase found.',
 };
 
@@ -7610,7 +8199,7 @@ const _englishLearningProfile = CountryHubProfile(
 );
 
 CountryHubProfile _learningProfileFor(AppLanguage language) =>
-    countryHubProfiles[language] ?? _englishLearningProfile;
+    _countryHubProfileFor(language);
 
 class CountryPhrasebookPage extends StatefulWidget {
   const CountryPhrasebookPage({
@@ -8106,6 +8695,20 @@ String _translateTargetCode(AppLanguage language) {
       return 'vi';
     case AppLanguage.sinhala:
       return 'si';
+    case AppLanguage.korean:
+      return 'ko';
+    case AppLanguage.japanese:
+      return 'ja';
+    case AppLanguage.german:
+      return 'de';
+    case AppLanguage.french:
+      return 'fr';
+    case AppLanguage.spanish:
+      return 'es';
+    case AppLanguage.arabic:
+      return 'ar';
+    case AppLanguage.russian:
+      return 'ru';
   }
 }
 
@@ -8121,7 +8724,7 @@ class CountrySupportPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resources = countryResourceProfiles[language]!;
+    final resources = _countryResourceProfileFor(language);
     return CountryHubScaffold(
       language: language,
       title: profile.supportTitle,
@@ -8148,7 +8751,7 @@ class CountrySupportPage extends StatelessWidget {
           onPressed: () => openWebsiteInApp(
             context,
             title: _localizedGovernmentPortalTitle(language),
-            url: countryGovernmentPortals[language]!,
+            url: _countryGovernmentPortalFor(language),
             copy: appCopies[language]!,
           ),
           icon: const Icon(Icons.public_outlined),
@@ -8246,8 +8849,8 @@ class CountryGoldReferencePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final profile = countryHubProfiles[language]!;
-    final resource = countryResourceProfiles[language]!;
+    final profile = _countryHubProfileFor(language);
+    final resource = _countryResourceProfileFor(language);
     return CountryHubScaffold(
       language: language,
       title: _localizedGoldTitle(language),
@@ -10467,6 +11070,22 @@ class StatusWebViewPage extends StatefulWidget {
   State<StatusWebViewPage> createState() => _StatusWebViewPageState();
 }
 
+const _fimMobileChromeUserAgent =
+    'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 '
+    '(KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36';
+const _responsiveWebViewScript = """
+(function () {
+  var viewport = document.querySelector('meta[name="viewport"]');
+  if (!viewport) {
+    viewport = document.createElement('meta');
+    viewport.name = 'viewport';
+    document.head.appendChild(viewport);
+  }
+  viewport.content = 'width=device-width, initial-scale=1, maximum-scale=5';
+  document.documentElement.style.webkitTextSizeAdjust = '100%';
+})();
+""";
+
 class _StatusWebViewPageState extends State<StatusWebViewPage>
     with SingleTickerProviderStateMixin {
   late final WebViewController _controller;
@@ -10486,6 +11105,7 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
     )..repeat();
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setUserAgent(_fimMobileChromeUserAgent)
       ..setBackgroundColor(Colors.white)
       ..setNavigationDelegate(
         NavigationDelegate(
@@ -10508,6 +11128,7 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
           },
           onPageFinished: (_) {
             if (!mounted) return;
+            _controller.runJavaScript(_responsiveWebViewScript);
             _completeLoading();
           },
           onWebResourceError: (error) {
@@ -10530,9 +11151,14 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
 
   void _armLoadTimeout() {
     _loadTimeout?.cancel();
-    _loadTimeout = Timer(const Duration(seconds: 12), () {
-      if (mounted && _showLoading) _failLoading();
-    });
+    _loadTimeout = Timer(
+      widget.url.contains('cims.cidb.gov.my')
+          ? const Duration(seconds: 30)
+          : const Duration(seconds: 12),
+      () {
+        if (mounted && _showLoading) _failLoading();
+      },
+    );
   }
 
   void _armProgressTimeout() {

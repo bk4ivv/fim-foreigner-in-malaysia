@@ -396,3 +396,17 @@ This request supersedes the approved Community tab as the primary fifth navigati
 - [x] Add a cohesive accessible page transition to Material routes throughout the app.
 - [x] Preserve readable light/dark contrast and asset error fallbacks on all animated surfaces.
 - [x] Build, inspect, and deliver the v2.14.0 APK plus refreshed source package; APK is debug-signed because the original production keystore was unavailable after the sandbox reset.
+
+## Reference App Recording Comparison — September 2026
+
+- [x] Inspect the supplied screen recording and identify the visual, motion, layout, typography, and interaction qualities that make the reference feel more polished than FIM.
+- [x] Compare those qualities with the current FIM implementation and prepare a prioritized redesign recommendation without changing the app until the user approves it.
+
+## FIM Aura, CIDB, Flight, and Major Language Update — September 2026
+
+- [x] Add a distinctive FIM-only Malaysian cultural aura with signature motion, atmosphere, and branded visual moments without copying the reference app.
+- [x] Diagnose and repair the CIDB official link so it loads reliably inside FIM’s in-app WebView with a clear fallback state.
+- [x] Expand the Trips flight providers with Cheapflights Malaysia, Mynztrip, and an additional Malaysia-legal airline or flight-booking source.
+- [x] Ensure Korean, Japanese, German, French, and other major language options provide working localized navigation, learning content, support content, and service labels rather than falling back silently to English.
+- [x] Add regression coverage for CIDB routing, flight-provider entries, and major-language fallback behavior.
+- [ ] Bump to v2.15.0, build and verify the updated APK, refresh the private GitHub source, and package the revised release artifacts.
