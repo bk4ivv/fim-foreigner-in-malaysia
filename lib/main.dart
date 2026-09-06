@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'fim_help_assistant.dart';
 
 const _appTitle = 'FIM - Foreigner in Malaysia';
 const _workerLogoAsset = 'assets/images/fim_malaysia_flag_logo.jpg';
@@ -4006,6 +4007,21 @@ class _HelpTab extends StatelessWidget {
         ),
         const SizedBox(height: 22),
         CivicSectionLabel(label: isBangla ? 'আরও তথ্য' : 'More information'),
+        const SizedBox(height: 12),
+        _HelpActionCard(
+          icon: Icons.support_agent_rounded,
+          title: isBangla ? 'FIM সহায়তা সহকারী' : 'FIM Help Assistant',
+          subtitle: isBangla
+              ? 'অফলাইনে অ্যাপ কীভাবে ব্যবহার করবেন তা জিজ্ঞাসা করুন'
+              : 'Ask how to use FIM with the offline user manual',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => FimHelpAssistantPage(
+                language: isBangla ? 'Bangla' : 'English',
+              ),
+            ),
+          ),
+        ),
         const SizedBox(height: 12),
         _HelpActionCard(
           icon: Icons.public_outlined,
