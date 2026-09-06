@@ -14,75 +14,61 @@ FimManualAnswer findFimManualAnswer(
   final normalized = question.trim().toLowerCase();
   final isBangla = language.toLowerCase() == 'bangla';
 
-  if (normalized.contains('language') ||
-      normalized.contains('ভাষা') ||
-      normalized.contains('idioma')) {
-    return isBangla
-        ? const FimManualAnswer(
-            title: 'ভাষা পরিবর্তন',
-            body: 'হোম স্ক্রিনের ভাষা নির্বাচন অপশন খুলে আপনার পছন্দের ভাষা বেছে নিন। FIM আবার খুললে আপনার ভাষা ব্যবহার করবে।',
-          )
-        : const FimManualAnswer(
-            title: 'Change language',
-            body: 'Open the language option from the FIM home screen and choose your preferred language. FIM will use that language across the app.',
-          );
-  }
-
-  if (normalized.contains('trip') ||
-      normalized.contains('bus') ||
-      normalized.contains('train') ||
-      normalized.contains('plane') ||
-      normalized.contains('flight') ||
-      normalized.contains('ferry') ||
-      normalized.contains('ট্রেন') ||
-      normalized.contains('বাস')) {
-    return isBangla
-        ? const FimManualAnswer(
-            title: 'ভ্রমণ',
-            body: 'হোম স্ক্রিন থেকে Trips খুলুন। বাস, বিমান, ফেরি বা ট্রেন বেছে নিলে FIM টিকিট খোঁজার উপযুক্ত সাইট দেখাবে।',
-          )
-        : const FimManualAnswer(
-            title: 'Trips',
-            body: 'Open Trips from the home screen. Choose Bus, Plane, Ferry, or Train to see suitable ticket-booking websites.',
-          );
-  }
-
-  if (normalized.contains('learn') ||
-      normalized.contains('malay') ||
-      normalized.contains('শেখা')) {
-    return isBangla
-        ? const FimManualAnswer(
-            title: 'শেখা',
-            body: 'নেভিগেশন থেকে Learn খুলুন। সেখানে মালয় ভাষা, দরকারি বাক্য এবং সংস্কৃতি-সম্পর্কিত শেখার বিষয়বস্তু পাবেন।',
-          )
-        : const FimManualAnswer(
-            title: 'Learn',
-            body: 'Open Learn from the navigation bar to find Malay language practice, useful phrases, and Malaysian culture content.',
-          );
-  }
-
-  if (normalized.contains('privacy') ||
+  final isCountrySupport = normalized.contains('country') ||
+      normalized.contains('support') ||
+      normalized.contains('দেশ') ||
+      normalized.contains('সহায়তা');
+  final isAboutFim = normalized.contains('about') ||
+      normalized.contains('what is fim') ||
+      normalized.contains('fim সম্পর্কে');
+  final isPrivacy = normalized.contains('privacy') ||
       normalized.contains('data') ||
-      normalized.contains('গোপনীয়তা')) {
+      normalized.contains('গোপনীয়তা');
+
+  if (isCountrySupport) {
     return isBangla
         ? const FimManualAnswer(
-            title: 'গোপনীয়তা',
-            body: 'Help & info খুলে Privacy policy নির্বাচন করুন। সেখানে ডেটা, ক্যামেরা এবং বাহ্যিক সেবা সম্পর্কে তথ্য পাবেন।',
+            title: 'দেশভিত্তিক সহায়তা',
+            body: 'Help & info থেকে Country support খুলুন। আপনার ভাষা ও দেশের জন্য উপলব্ধ সরকারি, দূতাবাস এবং সহায়তা উৎসগুলো সেখানে দেখুন।',
           )
         : const FimManualAnswer(
-            title: 'Privacy',
-            body: 'Open Help & info and choose Privacy policy to read about data, camera access, and external services.',
+            title: 'Country support',
+            body: 'Open Country support from Help & info. You can find available official, embassy, and support sources for your language and country there.',
+          );
+  }
+
+  if (isAboutFim) {
+    return isBangla
+        ? const FimManualAnswer(
+            title: 'FIM সম্পর্কে',
+            body: 'FIM হলো মালয়েশিয়ায় বসবাস ও কাজ করা বিদেশিদের জন্য একটি বিনামূল্যের সহায়ক অ্যাপ। এটি সরকারি সেবা, ভ্রমণ, শেখা এবং দরকারি তথ্য সহজে খুঁজে পেতে সাহায্য করে।',
+          )
+        : const FimManualAnswer(
+            title: 'About FIM',
+            body: 'FIM is a free helper app for foreigners living and working in Malaysia. It brings useful government services, travel, learning, and support information together.',
+          );
+  }
+
+  if (isPrivacy) {
+    return isBangla
+        ? const FimManualAnswer(
+            title: 'গোপনীয়তা নীতি',
+            body: 'গোপনীয়তা নীতিতে FIM-এর ডেটা ব্যবহার, ক্যামেরা, বাহ্যিক সেবা এবং আপনার নিয়ন্ত্রণ সম্পর্কে তথ্য পড়ুন। সরকারি বা আইনি সিদ্ধান্তের জন্য official source দেখুন।',
+          )
+        : const FimManualAnswer(
+            title: 'Privacy policy',
+            body: 'Read the Privacy policy for information about FIM data use, camera access, external services, and your controls. For government or legal decisions, check the official source.',
           );
   }
 
   return isBangla
       ? const FimManualAnswer(
-          title: 'FIM সহায়তা',
-          body: 'আমি FIM অ্যাপ ব্যবহার করতে সাহায্য করতে পারি। ভাষা পরিবর্তন, Trips, Learn, Privacy বা Help & info সম্পর্কে জিজ্ঞাসা করুন। সরকারি নিয়মের জন্য অ্যাপের official source দেখুন।',
+          title: 'তিনটি প্রশ্নের একটি বেছে নিন',
+          body: 'আমি শুধু Country support, About FIM এবং Privacy policy—এই তিনটি প্রশ্নের উত্তর দিই।',
         )
       : const FimManualAnswer(
-          title: 'I can help you use FIM',
-          body: 'Ask me about changing language, Trips, Learn, Privacy, or Help & info. For government rules or decisions, always check the official source shown in FIM.',
+          title: 'Choose one of the three FIM FAQs',
+          body: 'I answer only these three questions: Country support, About FIM, and Privacy policy.',
         );
 }
 
@@ -126,10 +112,10 @@ class _FimHelpAssistantPageState extends State<FimHelpAssistantPage> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final title = _isBangla ? 'FIM সহায়তা সহকারী' : 'FIM Help Assistant';
-    final hint = _isBangla ? 'আপনার প্রশ্ন লিখুন' : 'Ask how to use FIM';
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        title: Text(_isBangla ? 'FIM সহায়তা সহকারী' : 'FIM Help Assistant'),
+      ),
       body: Column(
         children: [
           Container(
@@ -138,8 +124,8 @@ class _FimHelpAssistantPageState extends State<FimHelpAssistantPage> {
             color: scheme.primaryContainer,
             child: Text(
               _isBangla
-                  ? 'এটি FIM-এর অফলাইন ব্যবহার নির্দেশিকা। সরকারি সিদ্ধান্তের জন্য official source দেখুন।'
-                  : 'This offline guide explains how to use FIM. For government decisions, check the official source shown in the app.',
+                  ? 'তিনটি FAQ থেকে একটি বেছে নিন।'
+                  : 'Choose one of the three FIM FAQs.',
               style: TextStyle(color: scheme.onPrimaryContainer, height: 1.35),
             ),
           ),
@@ -194,7 +180,9 @@ class _FimHelpAssistantPageState extends State<FimHelpAssistantPage> {
                       textInputAction: TextInputAction.send,
                       onSubmitted: _ask,
                       decoration: InputDecoration(
-                        hintText: hint,
+                        hintText: _isBangla
+                            ? 'তিনটি FAQ-এর একটি জিজ্ঞাসা করুন'
+                            : 'Ask one of the three FAQs',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
                         ),
@@ -234,17 +222,32 @@ class _SuggestedQuestions extends StatelessWidget {
   Widget build(BuildContext context) {
     final isBangla = language.toLowerCase() == 'bangla';
     final questions = isBangla
-        ? <String>['ভাষা কীভাবে পরিবর্তন করব?', 'Trips কোথায়?', 'Learn কীভাবে ব্যবহার করব?']
-        : <String>['How do I change the language?', 'Where can I find Trips?', 'How do I use Learn?'];
+        ? <String>[
+            'দেশভিত্তিক সহায়তা কোথায়?',
+            'FIM সম্পর্কে বলুন',
+            'গোপনীয়তা নীতি কোথায়?',
+          ]
+        : <String>[
+            'Where is Country support?',
+            'What is FIM about?',
+            'Where is the Privacy policy?',
+          ];
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        Icon(Icons.support_agent_rounded, size: 56, color: Theme.of(context).colorScheme.primary),
+        Icon(
+          Icons.support_agent_rounded,
+          size: 56,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         const SizedBox(height: 12),
         Text(
-          isBangla ? 'কীভাবে সাহায্য করব?' : 'How can I help?',
+          isBangla ? 'তিনটি FAQ থেকে বেছে নিন' : 'Choose a FIM FAQ',
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+          style: Theme.of(context)
+              .textTheme
+              .headlineSmall
+              ?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 20),
         for (final question in questions) ...[

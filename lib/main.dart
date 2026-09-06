@@ -4012,8 +4012,8 @@ class _HelpTab extends StatelessWidget {
           icon: Icons.support_agent_rounded,
           title: isBangla ? 'FIM সহায়তা সহকারী' : 'FIM Help Assistant',
           subtitle: isBangla
-              ? 'অফলাইনে অ্যাপ কীভাবে ব্যবহার করবেন তা জিজ্ঞাসা করুন'
-              : 'Ask how to use FIM with the offline user manual',
+              ? 'দেশভিত্তিক সহায়তা, FIM সম্পর্কে ও গোপনীয়তা নীতি'
+              : 'Country support, About FIM, and Privacy policy',
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute<void>(
               builder: (_) => FimHelpAssistantPage(
@@ -4021,37 +4021,6 @@ class _HelpTab extends StatelessWidget {
               ),
             ),
           ),
-        ),
-        const SizedBox(height: 12),
-        _HelpActionCard(
-          icon: Icons.public_outlined,
-          title: isBangla
-              ? 'দেশভিত্তিক সহায়তা'
-              : isEnglish
-              ? 'Country support'
-              : _countryHubProfileFor(language).supportTitle,
-          subtitle: isEnglish
-              ? 'Choose a language to access country-specific sources.'
-              : _countryHubProfileFor(language).supportSubtitle,
-          onTap: isEnglish ? () {} : onOpenCountryHub,
-        ),
-        const SizedBox(height: 12),
-        _HelpActionCard(
-          icon: Icons.info_outline_rounded,
-          title: isBangla ? 'অ্যাপ সম্পর্কে' : 'About FIM',
-          subtitle: isBangla
-              ? 'অ্যাপটি কেন তৈরি, কীভাবে কাজ করে ও ফ্রি ব্যবহারের তথ্য'
-              : 'Why FIM exists, how it works, and free-use information',
-          onTap: onOpenAppInformation,
-        ),
-        const SizedBox(height: 12),
-        _HelpActionCard(
-          icon: Icons.privacy_tip_outlined,
-          title: isBangla ? 'গোপনীয়তা নীতি' : 'Privacy policy',
-          subtitle: isBangla
-              ? 'ডেটা, ক্যামেরা, বাহ্যিক সেবা ও আপনার নিয়ন্ত্রণ'
-              : 'Data, camera access, external services, and your controls',
-          onTap: onOpenPrivacy,
         ),
         const SizedBox(height: 12),
         _HelpActionCard(
