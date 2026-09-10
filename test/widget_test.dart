@@ -35,6 +35,16 @@ AppLanguage? _appLanguageForLabelForTest(String label) {
 }
 
 void main() {
+  test('normalizes common worker-support links before opening them', () {
+    expect(normalizeExternalUrl('wa.me/60166700989')?.toString(),
+        'https://wa.me/60166700989');
+    expect(normalizeExternalUrl('www.google.com')?.toString(),
+        'https://www.google.com');
+    expect(normalizeExternalUrl('mailto:hire.borhankabir@hotmail.com')?.scheme,
+        'mailto');
+    expect(normalizeExternalUrl('   '), isNull);
+  });
+
   testWidgets('shows the FIM - Foreigner in Malaysia app title', (
     tester,
   ) async {

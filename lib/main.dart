@@ -1501,7 +1501,7 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
               child: Image.asset(
                 'assets/images/culture_batik_texture.jpg',
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
               ),
             ),
           ),
@@ -1561,7 +1561,7 @@ class _CulturalOrb extends StatelessWidget {
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          errorBuilder: (_, _, _) => const SizedBox.shrink(),
         ),
       ),
     );
@@ -1832,7 +1832,7 @@ class _CivicHeroPanelState extends State<CivicHeroPanel>
                 child: Image.asset(
                   'assets/images/culture_batik_texture.jpg',
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
                 ),
               ),
             ),
@@ -1914,7 +1914,7 @@ class _CulturalSignatureMark extends StatelessWidget {
                 width: 116,
                 height: 116,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
               ),
             ),
             Container(
@@ -3194,7 +3194,7 @@ class _WorkerDashboardTab extends StatelessWidget {
   }
 }
 
-enum _TripMode { bus, plane, ferry, train }
+enum TripMode { bus, plane, ferry, train }
 
 class _TripProvider {
   const _TripProvider({
@@ -3208,8 +3208,8 @@ class _TripProvider {
   final String note;
 }
 
-const _tripProviders = <_TripMode, List<_TripProvider>>{
-  _TripMode.bus: [
+const _tripProviders = <TripMode, List<_TripProvider>>{
+  TripMode.bus: [
     _TripProvider(
       name: 'redBus Malaysia',
       url: 'https://www.redbus.my/',
@@ -3226,7 +3226,7 @@ const _tripProviders = <_TripMode, List<_TripProvider>>{
       note: 'Bus schedules and online reservations in Malaysia.',
     ),
   ],
-  _TripMode.plane: [
+  TripMode.plane: [
     _TripProvider(
       name: 'Malaysia Airlines',
       url: 'https://www.malaysiaairlines.com/my/en/home.html',
@@ -3263,7 +3263,7 @@ const _tripProviders = <_TripMode, List<_TripProvider>>{
       note: 'Compare flight schedules and fares before booking.',
     ),
   ],
-  _TripMode.ferry: [
+  TripMode.ferry: [
     _TripProvider(
       name: 'BusOnlineTicket Ferry',
       url: 'https://www.busonlineticket.com/booking/ferry-tickets.aspx',
@@ -3280,7 +3280,7 @@ const _tripProviders = <_TripMode, List<_TripProvider>>{
       note: 'Ferry route and ticket search.',
     ),
   ],
-  _TripMode.train: [
+  TripMode.train: [
     _TripProvider(
       name: 'KTMB',
       url: 'https://www.ktmb.com.my/',
@@ -3294,28 +3294,28 @@ const _tripProviders = <_TripMode, List<_TripProvider>>{
   ],
 };
 
-String _tripModeTitle(AppLanguage language, _TripMode mode) {
+String _tripModeTitle(AppLanguage language, TripMode mode) {
   if (language == AppLanguage.bangla) {
     return switch (mode) {
-      _TripMode.bus => 'বাস',
-      _TripMode.plane => 'বিমান',
-      _TripMode.ferry => 'ফেরি',
-      _TripMode.train => 'ট্রেন',
+      TripMode.bus => 'বাস',
+      TripMode.plane => 'বিমান',
+      TripMode.ferry => 'ফেরি',
+      TripMode.train => 'ট্রেন',
     };
   }
   return switch (mode) {
-    _TripMode.bus => 'Bus',
-    _TripMode.plane => 'Plane',
-    _TripMode.ferry => 'Ferry',
-    _TripMode.train => 'Train',
+    TripMode.bus => 'Bus',
+    TripMode.plane => 'Plane',
+    TripMode.ferry => 'Ferry',
+    TripMode.train => 'Train',
   };
 }
 
-IconData _tripModeIcon(_TripMode mode) => switch (mode) {
-  _TripMode.bus => Icons.directions_bus_outlined,
-  _TripMode.plane => Icons.flight_outlined,
-  _TripMode.ferry => Icons.directions_boat_outlined,
-  _TripMode.train => Icons.train_outlined,
+IconData _tripModeIcon(TripMode mode) => switch (mode) {
+  TripMode.bus => Icons.directions_bus_outlined,
+  TripMode.plane => Icons.flight_outlined,
+  TripMode.ferry => Icons.directions_boat_outlined,
+  TripMode.train => Icons.train_outlined,
 };
 
 class TripsPage extends StatelessWidget {
@@ -3326,7 +3326,7 @@ class TripsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final copy = appCopies[language]!;
-    final modes = _TripMode.values;
+    final modes = TripMode.values;
     return Directionality(
       textDirection: copy.direction,
       child: Scaffold(
@@ -3400,7 +3400,7 @@ class TripProvidersPage extends StatelessWidget {
   });
 
   final AppLanguage language;
-  final _TripMode mode;
+  final TripMode mode;
 
   @override
   Widget build(BuildContext context) {
@@ -3929,7 +3929,6 @@ class _HelpTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final copy = appCopies[language]!;
     final isBangla = language == AppLanguage.bangla;
-    final isEnglish = language == AppLanguage.english;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
       children: [
@@ -7113,6 +7112,33 @@ String _localizedOfficialSocialLabel(AppLanguage language) =>
       AppLanguage.english => 'Official Facebook',
     };
 
+Uri? normalizeExternalUrl(String rawUrl) {
+  final trimmed = rawUrl.trim();
+  if (trimmed.isEmpty) {
+    return null;
+  }
+
+  final hasScheme = trimmed.contains('://');
+  final lower = trimmed.toLowerCase();
+
+  if (lower.startsWith('mailto:') ||
+      lower.startsWith('tel:') ||
+      lower.startsWith('https://') ||
+      lower.startsWith('http://')) {
+    return Uri.tryParse(trimmed);
+  }
+
+  if (lower.startsWith('www.')) {
+    return Uri.tryParse('https://$trimmed');
+  }
+
+  if (!hasScheme && trimmed.contains('.')) {
+    return Uri.tryParse('https://$trimmed');
+  }
+
+  return Uri.tryParse(trimmed);
+}
+
 void openWebsiteInApp(
   BuildContext context, {
   required String title,
@@ -7132,13 +7158,22 @@ Future<void> openAppDestination(
   required String url,
   required AppCopy copy,
 }) async {
-  final uri = Uri.tryParse(url);
-  if (uri != null && (uri.scheme == 'https' || uri.scheme == 'http')) {
-    openWebsiteInApp(context, title: title, url: url, copy: copy);
+  final uri = normalizeExternalUrl(url);
+  if (uri == null) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This link could not be opened.')),
+      );
+    }
     return;
   }
-  final opened =
-      uri != null && await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+  if (uri.scheme == 'https' || uri.scheme == 'http') {
+    openWebsiteInApp(context, title: title, url: uri.toString(), copy: copy);
+    return;
+  }
+
+  final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!opened && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('This link could not be opened.')),
@@ -8161,27 +8196,6 @@ String _learningNoMatch(AppLanguage language) => switch (language) {
   AppLanguage.russian => 'Подходящая малайская фраза не найдена.',
   AppLanguage.english => 'No matching Malay phrase found.',
 };
-
-const _englishLearningProfile = CountryHubProfile(
-  hubTitle: 'Support',
-  hubSubtitle: 'Official support and practical tools',
-  heroTitle: 'Learn Malay for daily life',
-  heroBody: 'Use the complete Malay sentences and words library with pronunciation support.',
-  serviceGuideTitle: 'Official services',
-  serviceAdvice: 'Use official sources for current rules.',
-  phrasebookTitle: 'Malay phrasebook',
-  phrasebookSubtitle: 'Malay words and sentences with pronunciation support.',
-  primaryMeaning: 'I need help.',
-  emergencyMeaning: 'Please, this is an emergency.',
-  supportTitle: 'Country support',
-  supportSubtitle: 'Find official routes for your country.',
-  supportName: 'Malaysia MFA directory',
-  supportDescription: 'Official directory of foreign missions in Malaysia.',
-  supportUrl: 'https://www.kln.gov.my/web/guest/foreign-missions-in-malaysia',
-  workerTitle: 'Worker support',
-  workerBody: 'Keep official contacts close when you need help.',
-  openOfficialLabel: 'Open official site',
-);
 
 CountryHubProfile _learningProfileFor(AppLanguage language) =>
     _countryHubProfileFor(language);
