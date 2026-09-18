@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
 import 'fim_help_assistant.dart';
 
 const _appTitle = 'FIM - Foreigner in Malaysia';
@@ -7121,22 +7122,31 @@ Uri? normalizeExternalUrl(String rawUrl) {
   final hasScheme = trimmed.contains('://');
   final lower = trimmed.toLowerCase();
 
-  if (lower.startsWith('mailto:') ||
-      lower.startsWith('tel:') ||
-      lower.startsWith('https://') ||
-      lower.startsWith('http://')) {
-    return Uri.tryParse(trimmed);
+  if (lower.startsWith('mailto:') || lower.startsWith('tel:')) {
+    final uri = Uri.tryParse(trimmed);
+    return uri == null || uri.path.isEmpty ? null : uri;
+  }
+
+  if (lower.startsWith('http://')) {
+    return null;
+  }
+
+  if (lower.startsWith('https://')) {
+    final uri = Uri.tryParse(trimmed);
+    return uri == null || uri.host.isEmpty || uri.userInfo.isNotEmpty
+        ? null
+        : uri;
   }
 
   if (lower.startsWith('www.')) {
-    return Uri.tryParse('https://$trimmed');
+    return normalizeExternalUrl('https://$trimmed');
   }
 
   if (!hasScheme && trimmed.contains('.')) {
-    return Uri.tryParse('https://$trimmed');
+    return normalizeExternalUrl('https://$trimmed');
   }
 
-  return Uri.tryParse(trimmed);
+  return null;
 }
 
 void openWebsiteInApp(
@@ -7168,7 +7178,7 @@ Future<void> openAppDestination(
     return;
   }
 
-  if (uri.scheme == 'https' || uri.scheme == 'http') {
+  if (uri.scheme == 'https') {
     openWebsiteInApp(context, title: title, url: uri.toString(), copy: copy);
     return;
   }
@@ -7459,7 +7469,7 @@ const countryHubProfiles = <AppLanguage, CountryHubProfile>{
     supportSubtitle: '中国驻马来西亚使馆官方信息',
     supportName: '中华人民共和国驻马来西亚大使馆',
     supportDescription: '请使用使馆官方网站了解领事、护照和官方通知。',
-    supportUrl: 'http://my.china-embassy.gov.cn/eng/',
+    supportUrl: 'https://my.china-embassy.gov.cn/eng/',
     workerTitle: '工作问题或投诉',
     workerBody: '保存工作文件，并通过马来西亚官方 JTK 渠道寻求帮助。',
     openOfficialLabel: '打开官方网站',
@@ -11134,8 +11144,11 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
             if (error.isForMainFrame != false) _failLoading();
           },
           onNavigationRequest: (request) {
-            final uri = Uri.tryParse(request.url);
-            if (uri == null || uri.scheme == 'http' || uri.scheme == 'https') {
+            final uri = normalizeExternalUrl(request.url);
+            if (uri == null) {
+              return NavigationDecision.prevent;
+            }
+            if (uri.scheme == 'https') {
               return NavigationDecision.navigate;
             }
             launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -11145,7 +11158,12 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
       );
     _armLoadTimeout();
     _armProgressTimeout();
-    _controller.loadRequest(Uri.parse(widget.url));
+    final initialUri = normalizeExternalUrl(widget.url);
+    if (initialUri == null || initialUri.scheme != 'https') {
+      _failLoading();
+      return;
+    }
+    _controller.loadRequest(initialUri);
   }
 
   void _armLoadTimeout() {
@@ -11202,10 +11220,9 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
   }
 
   Future<void> _openOutsideApp() async {
-    await launchUrl(
-      Uri.parse(widget.url),
-      mode: LaunchMode.externalApplication,
-    );
+    final uri = normalizeExternalUrl(widget.url);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   Future<void> _printOrSaveResult() async {
