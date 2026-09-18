@@ -36,13 +36,31 @@ AppLanguage? _appLanguageForLabelForTest(String label) {
 
 void main() {
   test('normalizes common worker-support links before opening them', () {
-    expect(normalizeExternalUrl('wa.me/60166700989')?.toString(),
-        'https://wa.me/60166700989');
-    expect(normalizeExternalUrl('www.google.com')?.toString(),
-        'https://www.google.com');
-    expect(normalizeExternalUrl('mailto:hire.borhankabir@hotmail.com')?.scheme,
-        'mailto');
+    expect(
+      normalizeExternalUrl('wa.me/60166700989')?.toString(),
+      'https://wa.me/60166700989',
+    );
+    expect(
+      normalizeExternalUrl('www.google.com')?.toString(),
+      'https://www.google.com',
+    );
+    expect(
+      normalizeExternalUrl('mailto:hire.borhankabir@hotmail.com')?.scheme,
+      'mailto',
+    );
     expect(normalizeExternalUrl('   '), isNull);
+  });
+
+  test('rejects cleartext, malformed, and unsupported external URLs', () {
+    expect(normalizeExternalUrl('http://example.com'), isNull);
+    expect(normalizeExternalUrl('https://'), isNull);
+    expect(normalizeExternalUrl('javascript:alert(1)'), isNull);
+    expect(normalizeExternalUrl('file:///tmp/private.txt'), isNull);
+    expect(normalizeExternalUrl('https://example.com/path')?.scheme, 'https');
+  });
+
+  test('uses English as the stable default application language', () {
+    expect(AppLanguage.values.first, AppLanguage.english);
   });
 
   testWidgets('shows the FIM - Foreigner in Malaysia app title', (
