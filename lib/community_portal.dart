@@ -8,6 +8,22 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'community_backend_config.dart';
 
+const maxProfileGalleryPhotos = 6;
+
+List<String> normalizeProfileGallery(dynamic raw, {String? legacyAvatar}) {
+  final values = <String>[
+    if (raw is List)
+      for (final item in raw)
+        if (item is String) item.trim(),
+    if (legacyAvatar?.trim().isNotEmpty == true) legacyAvatar!.trim(),
+  ];
+  return values
+      .where((value) => value.isNotEmpty)
+      .toSet()
+      .take(maxProfileGalleryPhotos)
+      .toList(growable: false);
+}
+
 class CommunityPortalPage extends StatefulWidget {
   const CommunityPortalPage({
     super.key,
@@ -72,7 +88,9 @@ class _CommunityPortalPageState extends State<CommunityPortalPage> {
     if (user == null) return null;
     return _client
         .from('profiles')
-        .select('id,display_name,avatar_path,community_state,role')
+        .select(
+          'id,display_name,avatar_path,gallery_paths,community_state,role',
+        )
         .eq('id', user.id)
         .maybeSingle();
   }
@@ -213,7 +231,9 @@ class _CommunityAccountHubPageState extends State<CommunityAccountHubPage> {
     if (user == null) return null;
     return _client
         .from('profiles')
-        .select('id,display_name,avatar_path,community_state,role')
+        .select(
+          'id,display_name,avatar_path,gallery_paths,community_state,role',
+        )
         .eq('id', user.id)
         .maybeSingle();
   }
@@ -775,11 +795,7 @@ class _AccountIdentityHeader extends StatelessWidget {
             color: scheme.primary,
             borderRadius: BorderRadius.circular(17),
           ),
-          child: Icon(
-            icon,
-            color: scheme.onPrimary,
-            size: 27,
-          ),
+          child: Icon(icon, color: scheme.onPrimary, size: 27),
         ),
         const SizedBox(width: 13),
         Expanded(
@@ -989,9 +1005,8 @@ class _CommunityProfileEditorPageState
   final _phone = TextEditingController();
   final _picker = ImagePicker();
   DateTime? _dob;
-  Uint8List? _avatarBytes;
-  String? _avatarName;
-  String? _existingAvatar;
+  final _newGalleryPhotos = <XFile>[];
+  List<String> _galleryUrls = const <String>[];
   var _loading = true;
   var _saving = false;
 
@@ -1017,7 +1032,7 @@ class _CommunityProfileEditorPageState
       final results = await Future.wait([
         _client
             .from('profiles')
-            .select('display_name,avatar_path')
+            .select('display_name,avatar_path,gallery_paths')
             .eq('id', _user.id)
             .maybeSingle(),
         _client
@@ -1029,7 +1044,10 @@ class _CommunityProfileEditorPageState
       final publicProfile = results[0];
       final privateProfile = results[1];
       _displayName.text = publicProfile?['display_name'] as String? ?? '';
-      _existingAvatar = publicProfile?['avatar_path'] as String?;
+      _galleryUrls = normalizeProfileGallery(
+        publicProfile?['gallery_paths'],
+        legacyAvatar: publicProfile?['avatar_path'] as String?,
+      );
       _address.text = privateProfile?['address'] as String? ?? '';
       _phone.text = privateProfile?['phone_number'] as String? ?? '';
       final rawDate = privateProfile?['date_of_birth'] as String?;
@@ -1043,19 +1061,33 @@ class _CommunityProfileEditorPageState
     }
   }
 
-  Future<void> _pickAvatar() async {
-    final file = await _picker.pickImage(
-      source: ImageSource.gallery,
+  Future<void> _pickGalleryPhotos() async {
+    final remaining =
+        maxProfileGalleryPhotos -
+        _galleryUrls.length -
+        _newGalleryPhotos.length;
+    if (remaining <= 0) {
+      return _message(_copy.profilePhotoLimit);
+    }
+    final files = await _picker.pickMultiImage(
       imageQuality: 82,
       maxWidth: 900,
       maxHeight: 900,
     );
-    if (file == null) return;
-    final bytes = await file.readAsBytes();
     if (!mounted) return;
     setState(() {
-      _avatarBytes = bytes;
-      _avatarName = file.name;
+      _newGalleryPhotos.addAll(files.take(remaining));
+    });
+  }
+
+  void _removeGalleryPhoto(int index) {
+    setState(() {
+      if (index < _galleryUrls.length) {
+        final next = [..._galleryUrls]..removeAt(index);
+        _galleryUrls = next;
+      } else {
+        _newGalleryPhotos.removeAt(index - _galleryUrls.length);
+      }
     });
   }
 
@@ -1076,13 +1108,16 @@ class _CommunityProfileEditorPageState
     }
     setState(() => _saving = true);
     try {
-      var avatarPath = _existingAvatar;
-      if (_avatarBytes != null) {
-        final extension = _avatarName?.split('.').last.toLowerCase();
+      final galleryPaths = [..._galleryUrls];
+      for (var index = 0; index < _newGalleryPhotos.length; index++) {
+        final file = _newGalleryPhotos[index];
+        final bytes = await file.readAsBytes();
+        final extension = file.name.split('.').last.toLowerCase();
         final safeExtension = {'jpg', 'jpeg', 'png', 'webp'}.contains(extension)
-            ? extension!
+            ? extension
             : 'jpg';
-        final objectPath = '${_user.id}/avatar.$safeExtension';
+        final objectPath =
+            '${_user.id}/gallery/${DateTime.now().microsecondsSinceEpoch}_$index.$safeExtension';
         final contentType = safeExtension == 'png'
             ? 'image/png'
             : safeExtension == 'webp'
@@ -1092,17 +1127,19 @@ class _CommunityProfileEditorPageState
             .from('profile-avatars')
             .uploadBinary(
               objectPath,
-              _avatarBytes!,
+              bytes,
               fileOptions: FileOptions(upsert: true, contentType: contentType),
             );
-        avatarPath = _client.storage
-            .from('profile-avatars')
-            .getPublicUrl(objectPath);
+        galleryPaths.add(
+          _client.storage.from('profile-avatars').getPublicUrl(objectPath),
+        );
       }
+      final avatarPath = galleryPaths.firstOrNull;
       await _client.from('profiles').upsert({
         'id': _user.id,
         'display_name': name,
         'avatar_path': avatarPath,
+        'gallery_paths': galleryPaths,
         'preferred_language': widget.selectedLanguage,
         'preferred_theme': 'system',
         'community_state': 'active',
@@ -1153,41 +1190,55 @@ class _CommunityProfileEditorPageState
                     body: copy.finishProfileBody,
                   ),
                   const SizedBox(height: 22),
-                  Center(
-                    child: Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 46,
-                          backgroundColor: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.10),
-                          backgroundImage: _avatarBytes != null
-                              ? MemoryImage(_avatarBytes!)
-                              : (_existingAvatar?.isNotEmpty ?? false
-                                        ? NetworkImage(_existingAvatar!)
-                                        : null)
-                                    as ImageProvider?,
-                          child:
-                              _avatarBytes == null &&
-                                  (_existingAvatar?.isEmpty ?? true)
-                              ? const Icon(
-                                  Icons.person_outline_rounded,
-                                  size: 42,
-                                )
-                              : null,
+                  Text(
+                    copy.profileGallery,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(copy.profileGalleryBody),
+                  const SizedBox(height: 14),
+                  GridView.count(
+                    crossAxisCount: 3,
+                    shrinkWrap: true,
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      for (var index = 0; index < _galleryUrls.length; index++)
+                        _GalleryPhotoTile(
+                          image: NetworkImage(_galleryUrls[index]),
+                          onRemove: () => _removeGalleryPhoto(index),
                         ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: IconButton.filled(
-                            onPressed: _pickAvatar,
-                            tooltip: copy.profilePhoto,
-                            icon: const Icon(Icons.photo_camera_outlined),
+                      for (
+                        var index = 0;
+                        index < _newGalleryPhotos.length;
+                        index++
+                      )
+                        _GalleryPhotoTile(
+                          image: null,
+                          bytesFuture: _newGalleryPhotos[index].readAsBytes(),
+                          onRemove: () =>
+                              _removeGalleryPhoto(_galleryUrls.length + index),
+                        ),
+                      if (_galleryUrls.length + _newGalleryPhotos.length <
+                          maxProfileGalleryPhotos)
+                        InkWell(
+                          onTap: _pickGalleryPhotos,
+                          borderRadius: BorderRadius.circular(16),
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(Icons.add_a_photo_outlined),
                           ),
                         ),
-                      ],
-                    ),
+                    ],
                   ),
                   const SizedBox(height: 18),
                   Text(
@@ -1267,6 +1318,55 @@ class _CommunityProfileEditorPageState
                   ),
                 ],
               ),
+      ),
+    );
+  }
+}
+
+class _GalleryPhotoTile extends StatelessWidget {
+  const _GalleryPhotoTile({
+    required this.image,
+    required this.onRemove,
+    this.bytesFuture,
+  });
+
+  final ImageProvider<Object>? image;
+  final Future<Uint8List>? bytesFuture;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final preview = bytesFuture == null
+        ? Image(image: image!, fit: BoxFit.cover)
+        : FutureBuilder<Uint8List>(
+            future: bytesFuture,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              return Image.memory(snapshot.data!, fit: BoxFit.cover);
+            },
+          );
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          preview,
+          Positioned(
+            top: 2,
+            right: 2,
+            child: IconButton(
+              onPressed: onRemove,
+              tooltip: 'Remove photo',
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.black54,
+                foregroundColor: Colors.white,
+              ),
+              icon: const Icon(Icons.close_rounded, size: 18),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2014,6 +2114,10 @@ class _AccountSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final avatar = profile?['avatar_path'] as String?;
+    final gallery = normalizeProfileGallery(
+      profile?['gallery_paths'],
+      legacyAvatar: avatar,
+    );
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -2057,6 +2161,26 @@ class _AccountSummaryCard extends StatelessWidget {
               ),
             ],
           ),
+          if (gallery.length > 1) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              height: 68,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: gallery.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (context, index) => ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    gallery[index],
+                    width: 68,
+                    height: 68,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
           Text(
             verified ? copy.verifiedAccount : copy.verificationNeeded,
@@ -2401,6 +2525,14 @@ class _CommunityCopy {
       ? 'জন্মতারিখ, ঠিকানা ও ফোন নম্বর শুধুই আপনার জন্য। এগুলো পোস্ট বা মন্তব্যে দেখানো হবে না।'
       : 'Date of birth, address, and phone are private to you. They never appear on posts or comments.';
   String get profilePhoto => bangla ? 'প্রোফাইল ছবি' : 'Profile photo';
+  String get profileGallery =>
+      bangla ? 'প্রোফাইল ফটো গ্যালারি' : 'Profile photo gallery';
+  String get profileGalleryBody => bangla
+      ? 'সর্বোচ্চ ৬টি ছবি যোগ করুন। প্রথম ছবিটি কমিউনিটিতে আপনার প্রোফাইল ছবি হিসেবে দেখা যাবে।'
+      : 'Add up to 6 photos. The first photo appears as your Community profile picture.';
+  String get profilePhotoLimit => bangla
+      ? 'আপনি সর্বোচ্চ ৬টি ছবি যোগ করতে পারবেন।'
+      : 'You can add up to 6 profile photos.';
   String get displayName => bangla ? 'ডিসপ্লে নাম' : 'Display name';
   String get displayNameRule => bangla
       ? '৩ থেকে ৩২ অক্ষরের একটি ডিসপ্লে নাম দিন।'
