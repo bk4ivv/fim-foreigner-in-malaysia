@@ -13,6 +13,16 @@ val isReleaseBuild = gradle.startParameter.taskNames.any { taskName ->
     taskName.contains("Release", ignoreCase = true)
 }
 
+fun requiredProperty(name: String): String {
+    return keystoreProperties.getProperty(name)?.takeIf { it.isNotBlank() }
+        ?: throw GradleException("Missing '$name' in ${keystorePropertiesFile.path}.")
+}
+
+fun requiredEnvironment(name: String): String {
+    return System.getenv(name)?.takeIf { it.isNotBlank() }
+        ?: throw GradleException("Missing signing environment variable '$name'.")
+}
+
 if (isReleaseBuild && !keystorePropertiesFile.exists()) {
     throw GradleException(
         "Release signing requires ${keystorePropertiesFile.path}. " +
@@ -22,6 +32,13 @@ if (isReleaseBuild && !keystorePropertiesFile.exists()) {
 
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
+if (isReleaseBuild && keystorePropertiesFile.exists()) {
+    requiredProperty("keyAlias")
+    requiredProperty("storeFile")
+    requiredEnvironment("FIM_KEYSTORE_PASSWORD")
+    requiredEnvironment("FIM_KEY_PASSWORD")
 }
 
 android {
@@ -35,7 +52,6 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.expatstatuschecker.expat_status_checker"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -52,10 +68,10 @@ android {
     signingConfigs {
         if (keystorePropertiesFile.exists()) {
             create("releaseUpload") {
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
-                storeFile = file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties.getProperty("keyAlias", "")
+                keyPassword = System.getenv("FIM_KEY_PASSWORD") ?: ""
+                storeFile = file(keystoreProperties.getProperty("storeFile", ""))
+                storePassword = System.getenv("FIM_KEYSTORE_PASSWORD") ?: ""
             }
         }
     }

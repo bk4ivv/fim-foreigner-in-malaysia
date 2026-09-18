@@ -16,7 +16,7 @@ Generated caches, build output, local SDK paths, local machine configuration, pr
 
 ## Recommended environment
 
-Use Flutter 3.47.0 or a compatible recent Flutter 3 release with Dart 3.13 or newer. Android builds require Android Studio or the Android command-line tools, an Android SDK with the project’s compile SDK installed, and a Java Development Kit. Java 21 was used for the validated build. The project can be opened in Android Studio or Visual Studio Code on Windows, macOS, or Linux.
+Use Flutter 3.47.2 or a compatible recent Flutter 3 release with Dart 3.13 or newer. Android builds require Android Studio or the Android command-line tools, an Android SDK with the project’s compile SDK installed, and a Java Development Kit. Java 21 was used for the validated build. The project can be opened in Android Studio or Visual Studio Code on Windows, macOS, or Linux. Flutter creates `android/local.properties` locally; it is intentionally untracked and must not contain paths committed to Git.
 
 ## Open and run the project
 
@@ -34,10 +34,10 @@ Connect an Android phone with developer mode and USB debugging enabled, or start
 
 ## Build an Android APK
 
-For a normal release APK, run:
+For a debug APK, run:
 
 ```bash
-flutter build apk --release --build-name=2.12.4 --build-number=33
+flutter build apk --debug
 ```
 
 The output will be created at:
@@ -46,7 +46,23 @@ The output will be created at:
 build/app/outputs/flutter-apk/app-release.apk
 ```
 
-For a Play Store upload, create or recover the correct private keystore, configure `android/key.properties` locally, and add the signing configuration to the Android Gradle project. Do not put the keystore, passwords, or `key.properties` into a public repository or send them through an unencrypted channel. The original production keystore from the previous build is not included in this package.
+For a Play Store upload, use the existing production upload keystore; do not generate or commit a replacement key. Configure `android/key.properties` locally with the non-secret `keyAlias` and `storeFile` entries. Keep `android/key.properties` and all keystore files untracked. The signing passwords must be supplied through the secure environment variables `FIM_KEYSTORE_PASSWORD` and `FIM_KEY_PASSWORD` or an equivalent CI secret store; never place passwords, keystores, API keys, or service-role credentials in Git.
+
+Build the signed Android App Bundle without putting real secrets in shell history or documentation:
+
+```bash
+export FIM_KEYSTORE_PASSWORD='provided-by-your-secret-store'
+export FIM_KEY_PASSWORD='provided-by-your-secret-store'
+flutter build appbundle --release
+```
+
+The release build intentionally fails when `android/key.properties`, its required fields, the referenced keystore, or either password environment variable is missing. It never falls back to the debug key. The output will be created at:
+
+```text
+build/app/outputs/bundle/release/app-release.aab
+```
+
+The existing application ID is `com.expatstatuschecker.expat_status_checker`; changing it would create a different Play Store application.
 
 ## Optional community backend
 
