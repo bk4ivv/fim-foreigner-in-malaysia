@@ -14,7 +14,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'fim_help_assistant.dart';
 
 const _appTitle = 'FIM - Foreigner in Malaysia';
-const _workerLogoAsset = 'assets/images/fim_malaysia_flag_logo.jpg';
+const _workerLogoAsset = 'assets/images/fim_logo.png';
 const _creatorAvatarAsset =
     'assets/images/khandaker-md-borhan-kabir-profile.jpg';
 
