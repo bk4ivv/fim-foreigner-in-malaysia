@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:expat_status_checker/main.dart';
+import 'package:expat_status_checker/community_email_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -36,12 +37,18 @@ AppLanguage? _appLanguageForLabelForTest(String label) {
 
 void main() {
   test('normalizes common worker-support links before opening them', () {
-    expect(normalizeExternalUrl('wa.me/60166700989')?.toString(),
-        'https://wa.me/60166700989');
-    expect(normalizeExternalUrl('www.google.com')?.toString(),
-        'https://www.google.com');
-    expect(normalizeExternalUrl('mailto:hire.borhankabir@hotmail.com')?.scheme,
-        'mailto');
+    expect(
+      normalizeExternalUrl('wa.me/60166700989')?.toString(),
+      'https://wa.me/60166700989',
+    );
+    expect(
+      normalizeExternalUrl('www.google.com')?.toString(),
+      'https://www.google.com',
+    );
+    expect(
+      normalizeExternalUrl('mailto:hire.borhankabir@hotmail.com')?.scheme,
+      'mailto',
+    );
     expect(normalizeExternalUrl('   '), isNull);
   });
 
@@ -65,25 +72,41 @@ void main() {
     expect(find.byType(LinearProgressIndicator), findsNothing);
   });
 
-  testWidgets(
-    'provides one unified Help and Info destination without Community',
-    (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: WorkerUtilityShellPage(language: AppLanguage.english),
-        ),
-      );
+  testWidgets('provides Home, Learn, Help, and Community destinations', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: WorkerUtilityShellPage(language: AppLanguage.english),
+      ),
+    );
 
-      expect(find.text('Home'), findsOneWidget);
-      expect(find.text('Learn'), findsOneWidget);
-      expect(find.text('Info'), findsNothing);
-      expect(find.text('Credit'), findsNothing);
-      expect(find.text('Help & info'), findsOneWidget);
-      expect(find.text('Community'), findsNothing);
-      expect(find.text('Account'), findsNothing);
-      expect(find.text('Visa Status'), findsOneWidget);
-    },
-  );
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Learn'), findsOneWidget);
+    expect(find.text('Info'), findsNothing);
+    expect(find.text('Credit'), findsNothing);
+    expect(find.text('Help & info'), findsOneWidget);
+    expect(find.text('Community'), findsOneWidget);
+    expect(find.text('Account'), findsNothing);
+    expect(find.text('Visa Status'), findsOneWidget);
+  });
+
+  testWidgets('renders the email-based Community post and report choices', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: CommunityEmailPage(isBangla: false)),
+      ),
+    );
+
+    expect(find.text('Community, together'), findsOneWidget);
+    expect(find.text('Write a community post'), findsOneWidget);
+    await tester.tap(find.text('Report'));
+    await tester.pump();
+    expect(find.text('Report a community issue'), findsOneWidget);
+    expect(find.text('Send report by email'), findsOneWidget);
+  });
 
   test(
     'creates a country-aware hub profile for every non-English language',

@@ -4,17 +4,16 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
+import 'community_email_page.dart';
 import 'fim_help_assistant.dart';
 
 const _appTitle = 'FIM - Foreigner in Malaysia';
-const _workerLogoAsset = 'assets/images/fim_malaysia_flag_logo.jpg';
+const _workerLogoAsset = 'assets/images/foreigner_in_malaysia_logo.png';
 const _creatorAvatarAsset =
     'assets/images/khandaker-md-borhan-kabir-profile.jpg';
 
@@ -2932,6 +2931,33 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
   }
 
   String _navigationLabel(int index) {
+    if (index == 3) {
+      const communityLabels = <AppLanguage, String>{
+        AppLanguage.english: 'Community',
+        AppLanguage.bangla: 'কমিউনিটি',
+        AppLanguage.malay: 'Komuniti',
+        AppLanguage.indonesian: 'Komunitas',
+        AppLanguage.tamil: 'சமூகம்',
+        AppLanguage.urdu: 'کمیونٹی',
+        AppLanguage.hindi: 'समुदाय',
+        AppLanguage.nepali: 'समुदाय',
+        AppLanguage.burmese: 'အသိုင်းအဝိုင်း',
+        AppLanguage.thai: 'ชุมชน',
+        AppLanguage.khmer: 'សហគមន៍',
+        AppLanguage.filipino: 'Komunidad',
+        AppLanguage.chinese: '社区',
+        AppLanguage.vietnamese: 'Cộng đồng',
+        AppLanguage.sinhala: 'ප්‍රජාව',
+        AppLanguage.korean: '커뮤니티',
+        AppLanguage.japanese: 'コミュニティ',
+        AppLanguage.german: 'Community',
+        AppLanguage.french: 'Communauté',
+        AppLanguage.spanish: 'Comunidad',
+        AppLanguage.arabic: 'المجتمع',
+        AppLanguage.russian: 'Сообщество',
+      };
+      return communityLabels[widget.language] ?? 'Community';
+    }
     const labels = <AppLanguage, List<String>>{
       AppLanguage.english: ['Home', 'Learn', 'Help & info'],
       AppLanguage.bangla: ['হোম', 'শেখা', 'সহায়তা ও তথ্য'],
@@ -2992,6 +3018,7 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
           ),
         ),
       ),
+      CommunityEmailPage(isBangla: widget.language == AppLanguage.bangla),
     ];
     return PopScope<void>(
       canPop: false,
@@ -3051,6 +3078,10 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
               NavigationDestination(
                 icon: const Icon(Icons.support_agent_outlined),
                 label: _navigationLabel(2),
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.forum_outlined),
+                label: _navigationLabel(3),
               ),
             ],
           ),
@@ -9334,6 +9365,32 @@ class BanglaServiceGuidePage extends StatelessWidget {
           icon: const Icon(Icons.open_in_new_rounded),
           label: const Text('অফিসিয়াল EPF / KWSP খুলুন'),
         ),
+        const SizedBox(height: 18),
+        const _BanglaSection(
+          icon: Icons.travel_explore_rounded,
+          title: 'নিরাপদ অভিবাসন ও BMET তথ্য',
+          body: 'বিদেশে কাজ, রিক্রুটিং এজেন্সি, নিবন্ধন ও প্রবাসী কর্মীদের সরকারি তথ্য সম্পর্কে জানতে BMET-এর অফিসিয়াল সাইট দেখুন। কোনো দালাল বা মধ্যস্থতাকারীকে টাকা দেওয়ার আগে তথ্য যাচাই করুন।',
+          color: Color(0xFF1B5E52),
+        ),
+        const SizedBox(height: 10),
+        FilledButton.icon(
+          onPressed: () => _open(context, 'https://bmet.gov.bd/'),
+          icon: const Icon(Icons.open_in_new_rounded),
+          label: const Text('BMET অফিসিয়াল তথ্য খুলুন'),
+        ),
+        const SizedBox(height: 18),
+        const _BanglaSection(
+          icon: Icons.volunteer_activism_outlined,
+          title: 'ওয়েজ আর্নার্স কল্যাণ বোর্ড',
+          body: 'প্রবাসী কর্মীদের কল্যাণ, সহায়তা ও সরকারি সুবিধা সম্পর্কে জানতে ওয়েজ আর্নার্স কল্যাণ বোর্ডের অফিসিয়াল তথ্য দেখুন। যোগ্যতা ও আবেদন প্রক্রিয়া পরিবর্তিত হতে পারে।',
+          color: Color(0xFF314A7E),
+        ),
+        const SizedBox(height: 10),
+        FilledButton.icon(
+          onPressed: () => _open(context, 'https://wewb.gov.bd/'),
+          icon: const Icon(Icons.open_in_new_rounded),
+          label: const Text('কল্যাণ বোর্ডের তথ্য খুলুন'),
+        ),
       ],
     );
   }
@@ -11093,7 +11150,6 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
   bool _showLoading = true;
   bool _loadFailed = false;
   Timer? _loadTimeout;
-  Timer? _progressTimeout;
 
   @override
   void initState() {
@@ -11111,7 +11167,6 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
           onPageStarted: (_) {
             if (!mounted) return;
             _armLoadTimeout();
-            _armProgressTimeout();
             setState(() {
               _loadingProgress = 0;
               _loadFailed = false;
@@ -11144,7 +11199,6 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
         ),
       );
     _armLoadTimeout();
-    _armProgressTimeout();
     _controller.loadRequest(Uri.parse(widget.url));
   }
 
@@ -11160,17 +11214,8 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
     );
   }
 
-  void _armProgressTimeout() {
-    _progressTimeout?.cancel();
-    _progressTimeout = Timer(const Duration(seconds: 6), () {
-      if (!mounted) return;
-      setState(() => _showLoading = false);
-    });
-  }
-
   void _completeLoading() {
     _loadTimeout?.cancel();
-    _progressTimeout?.cancel();
     if (!mounted) return;
     setState(() {
       _loadingProgress = 100;
@@ -11181,7 +11226,6 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
 
   void _failLoading() {
     _loadTimeout?.cancel();
-    _progressTimeout?.cancel();
     if (!mounted) return;
     setState(() {
       _loadFailed = true;
@@ -11197,7 +11241,6 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
       _showLoading = true;
     });
     _armLoadTimeout();
-    _armProgressTimeout();
     _controller.reload();
   }
 
@@ -11208,57 +11251,9 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
     );
   }
 
-  Future<void> _printOrSaveResult() async {
-    try {
-      final raw = await _controller.runJavaScriptReturningResult(
-        'document.body ? document.body.innerText : ""',
-      );
-      final visibleText = raw.toString().replaceAll(r'\n', '\n').trim();
-      final pdf = pw.Document();
-      pdf.addPage(
-        pw.MultiPage(
-          build: (context) => [
-            pw.Header(level: 0, text: widget.title),
-            pw.Paragraph(
-              text: visibleText.isEmpty
-                  ? 'No readable result text was found.'
-                  : visibleText,
-            ),
-            pw.SizedBox(height: 16),
-            pw.Paragraph(text: 'Source: ${widget.url}'),
-            pw.Paragraph(text: 'Generated by FIM - Foreigner in Malaysia.'),
-          ],
-        ),
-      );
-      final bytes = await pdf.save();
-      final directory = await getApplicationDocumentsDirectory();
-      final safeName = widget.title.toLowerCase().replaceAll(
-        RegExp(r'[^a-z0-9]+'),
-        '_',
-      );
-      final file = File('${directory.path}/${safeName}_result.pdf');
-      await file.writeAsBytes(bytes, flush: true);
-      await Printing.sharePdf(bytes: bytes, filename: '${safeName}_result.pdf');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('PDF saved and ready to print: ${file.path}')),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('The result could not be prepared for printing.'),
-          ),
-        );
-      }
-    }
-  }
-
   @override
   void dispose() {
     _loadTimeout?.cancel();
-    _progressTimeout?.cancel();
     _loadingMotion.dispose();
     super.dispose();
   }
@@ -11302,13 +11297,21 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
                 child: _showLoading
-                    ? LinearProgressIndicator(
+                    ? AnimatedBuilder(
                         key: const ValueKey('loading'),
-                        minHeight: 3,
-                        value: _loadingProgress > 0
-                            ? _loadingProgress / 100
-                            : null,
-                        backgroundColor: const Color(0xFFE5E7EB),
+                        animation: _loadingMotion,
+                        builder: (context, _) => LinearProgressIndicator(
+                          minHeight: 3,
+                          value: _loadingProgress > 0
+                              ? _loadingProgress / 100
+                              : null,
+                          backgroundColor: const Color(0xFFE5E7EB),
+                          color: Color.lerp(
+                            AppPalette.flagYellow,
+                            AppPalette.flagRed,
+                            _loadingMotion.value,
+                          ),
+                        ),
                       )
                     : const SizedBox(key: ValueKey('loaded'), height: 3),
               ),
@@ -11327,25 +11330,6 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
                       ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          floatingActionButton: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              FloatingActionButton.small(
-                heroTag: 'print-result',
-                tooltip: 'Print or save result',
-                onPressed: _printOrSaveResult,
-                child: const Icon(Icons.print_outlined),
-              ),
-              const SizedBox(height: 10),
-              FloatingActionButton.small(
-                heroTag: 'reload-page',
-                tooltip: widget.copy.reload,
-                onPressed: () => _controller.reload(),
-                child: const Icon(Icons.refresh_rounded),
               ),
             ],
           ),
