@@ -4,17 +4,18 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
+import 'community_email_page.dart';
 import 'fim_help_assistant.dart';
+import 'malaysia_ticket_portal.dart';
+import 'user_manual_page.dart';
 
 const _appTitle = 'FIM - Foreigner in Malaysia';
-const _workerLogoAsset = 'assets/images/fim_malaysia_flag_logo.jpg';
+const _workerLogoAsset = 'assets/images/foreigner_in_malaysia_logo.png';
 const _creatorAvatarAsset =
     'assets/images/khandaker-md-borhan-kabir-profile.jpg';
 
@@ -2093,212 +2094,314 @@ class LanguageSelectionPage extends StatelessWidget {
 
 class CountrySelectionPage extends StatefulWidget {
   const CountrySelectionPage({super.key});
-
   @override
   State<CountrySelectionPage> createState() => _CountrySelectionPageState();
 }
 
 class _CountrySelectionPageState extends State<CountrySelectionPage> {
   late final Future<List<CountryOption>> _countries = _loadCountryOptions();
-  final _search = TextEditingController();
-  String _query = '';
-
-  @override
-  void dispose() {
-    _search.dispose();
-    super.dispose();
-  }
+  CountryOption? _selectedCountry;
+  String? _selectedLanguageName;
+  AppLanguage? _selectedLanguage;
 
   void _chooseCountry(CountryOption country) {
+    final suggested = _countryLanguageDefaults[country.code];
+    final suggestedName = suggested == null
+        ? 'English'
+        : appCopies[suggested]!.languageName;
+    setState(() {
+      _selectedCountry = country;
+      _selectedLanguage = suggested ?? AppLanguage.english;
+      _selectedLanguageName = suggestedName;
+    });
     activeWorkerCountry.value = country;
-    Navigator.of(context).push(
+  }
+
+  void _chooseLanguage(String languageName) {
+    final language = _appLanguageForLabel(languageName);
+    setState(() {
+      _selectedLanguageName = languageName;
+      _selectedLanguage = language ?? AppLanguage.english;
+    });
+  }
+
+  Future<void> _openCountryPicker() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        var query = '';
+        return StatefulBuilder(
+          builder: (context, setSheetState) => SafeArea(
+            child: SizedBox(
+              height: MediaQuery.sizeOf(context).height * 0.82,
+              child: FutureBuilder<List<CountryOption>>(
+                future: _countries,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final countries = snapshot.data!
+                      .where(
+                        (country) => country.name.toLowerCase().contains(
+                          query.trim().toLowerCase(),
+                        ),
+                      )
+                      .toList(growable: false);
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Select Country/Region',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          autofocus: true,
+                          onChanged: (value) =>
+                              setSheetState(() => query = value),
+                          decoration: const InputDecoration(
+                            prefixIcon: Icon(Icons.search_rounded),
+                            hintText: 'Search country or region',
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: countries.length,
+                            itemBuilder: (_, index) {
+                              final country = countries[index];
+                              return _CountryButton(
+                                country: country,
+                                onPressed: () {
+                                  _chooseCountry(country);
+                                  Navigator.of(sheetContext).pop();
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openLanguagePicker() async {
+    final country = _selectedCountry;
+    if (country == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please choose a country/region first.')),
+      );
+      return;
+    }
+    final languageNames = {...country.languages, 'English'}.toList();
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          children: [
+            Text(
+              'Select Language',
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 12),
+            for (final language in languageNames)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 9),
+                child: _LanguageChoiceButton(
+                  name: language,
+                  supported: _appLanguageForLabel(language) != null,
+                  onPressed: () {
+                    _chooseLanguage(language);
+                    Navigator.of(sheetContext).pop();
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _done() {
+    final country = _selectedCountry;
+    final language = _selectedLanguage;
+    if (country == null || language == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please choose a country/region and language.'),
+        ),
+      );
+      return;
+    }
+    activeWorkerCountry.value = country;
+    activeWorkerLanguage.value = language;
+    Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
-        builder: (_) => CountryLanguageSelectionPage(country: country),
+        builder: (_) => WorkerUtilityShellPage(language: language),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final copy = appCopies[AppLanguage.english]!;
+    final country = _selectedCountry;
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: _AppBar(title: _appTitle),
-      bottomNavigationBar: _CompactCreditBar(
-        copy: copy,
-        onOpenProfile: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => CreatorProfilePage(copy: copy),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFA8E5D5),
+        foregroundColor: const Color(0xFF0A1D1D),
+        leadingWidth: 84,
+        leading: TextButton(
+          onPressed: () => Navigator.of(context).maybePop(),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(color: Color(0xFF0A1D1D)),
+          ),
+        ),
+        title: const Text(
+          'Country/Region & Language',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF0A1D1D),
           ),
         ),
       ),
       body: SafeArea(
-        child: FutureBuilder<List<CountryOption>>(
-          future: _countries,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.cloud_off_rounded,
-                        size: 42,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        'Country data could not be loaded',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleLarge
-                            ?.copyWith(fontWeight: FontWeight.w900),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Please try again. Your app content is kept on this device.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface
-                              .withValues(alpha: 0.68),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      FilledButton.icon(
-                        onPressed: () => Navigator.of(context).pushReplacement(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const CountrySelectionPage(),
-                          ),
-                        ),
-                        icon: const Icon(Icons.refresh_rounded),
-                        label: const Text('Try again'),
-                      ),
-                    ],
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(28, 42, 28, 30),
+          children: [
+            Text(
+              'Which country/region and language do you want to use?',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: scheme.onSurface,
+                fontWeight: FontWeight.w500,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 28),
+            _RegionLanguageCard(
+              title: 'Country/Region:',
+              value: country == null
+                  ? 'Choose your country or region'
+                  : '${country.flag}  ${country.name}',
+              onTap: _openCountryPicker,
+            ),
+            const SizedBox(height: 12),
+            _RegionLanguageCard(
+              title: 'Language:',
+              value: _selectedLanguageName ?? 'Choose a language',
+              enabled: country != null,
+              onTap: _openLanguagePicker,
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              height: 58,
+              child: FilledButton(
+                onPressed: _done,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppPalette.flagYellow,
+                  foregroundColor: AppPalette.flagNavy,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              );
-            }
-            if (!snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final countries = snapshot.data!
-                .where(
-                  (country) => country.name.toLowerCase().contains(
-                    _query.trim().toLowerCase(),
-                  ),
-                )
-                .toList(growable: false);
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
+                child: const Text('Done'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RegionLanguageCard extends StatelessWidget {
+  const _RegionLanguageCard({
+    required this.title,
+    required this.value,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  final String title;
+  final String value;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surface,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(14),
+        child: Opacity(
+          opacity: enabled ? 1 : 0.48,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(22, 16, 14, 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: scheme.outline.withValues(alpha: 0.62)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x12000000),
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
               children: [
-                CivicHeroPanel(
-                  child: Row(
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(18),
-                        child: Image.asset(
-                          _workerLogoAsset,
-                          width: 78,
-                          height: 78,
-                          fit: BoxFit.cover,
-                          semanticLabel:
-                              'FIM - Foreigner in Malaysia worker illustration',
-                        ),
+                      Text(
+                        title,
+                        style: TextStyle(color: scheme.onSurface, fontSize: 16),
                       ),
-                      const SizedBox(width: 14),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _HeroStatusPill(label: 'WORKER UTILITY · MALAYSIA'),
-                            SizedBox(height: 10),
-                            Text(
-                              'Choose your country first',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 23,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.9,
-                                height: 1.03,
-                              ),
-                            ),
-                            SizedBox(height: 7),
-                            Text(
-                              'Then choose your national language or English.',
-                              style: TextStyle(
-                                color: Color(0xFFD3E5E0),
-                                fontSize: 11.5,
-                                height: 1.35,
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 4),
+                      Text(
+                        value,
+                        style: TextStyle(
+                          color: scheme.onSurface,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  'Where are you from?',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w900,
-                  ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: scheme.onSurface,
+                  size: 28,
                 ),
-                const SizedBox(height: 7),
-                Text(
-                  'We will show official support routes and languages for your country. Work permission still depends on current Malaysian rules and your permit.',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface
-                        .withValues(alpha: 0.68),
-                    fontSize: 14,
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _search,
-                  onChanged: (value) => setState(() => _query = value),
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search_rounded),
-                    hintText: 'Search every country',
-                    filled: true,
-                    fillColor: Theme.of(context).colorScheme.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                CivicSectionLabel(
-                  label: 'COUNTRIES',
-                  trailing: _CountPill(
-                    label: '${snapshot.data!.length} COUNTRIES',
-                  ),
-                ),
-                const SizedBox(height: 10),
-                for (final country in countries)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 9),
-                    child: _CountryButton(
-                      country: country,
-                      onPressed: () => _chooseCountry(country),
-                    ),
-                  ),
-                if (countries.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 32),
-                    child: Center(
-                      child: Text('No country found. Try another spelling.'),
-                    ),
-                  ),
               ],
-            );
-          },
+            ),
+          ),
         ),
       ),
     );
@@ -2489,7 +2592,7 @@ class FirstUseGuidePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 26),
                 Text(
-                  guide.question,
+                  copy.servicePageTitle,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: const Color(0xFF163A38),
@@ -2548,45 +2651,13 @@ class FirstUseGuidePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: () {
-                    showModalBottomSheet<void>(
-                      context: context,
-                      builder: (sheetContext) => Directionality(
-                        textDirection: copy.direction,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 30),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.ondemand_video_outlined,
-                                color: Color(0xFF0E5C57),
-                                size: 34,
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                guide.videoPending,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Color(0xFF385852),
-                                  fontSize: 14,
-                                  height: 1.45,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(sheetContext).pop();
-                                  _continue(context);
-                                },
-                                child: Text(guide.continueAnyway),
-                              ),
-                            ],
-                          ),
-                        ),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => UserManualPage(
+                        isBangla: language == AppLanguage.bangla,
                       ),
-                    );
-                  },
+                    ),
+                  ),
                   icon: const Icon(Icons.play_circle_outline_rounded),
                   label: Text(guide.videoLabel),
                   style: OutlinedButton.styleFrom(
@@ -2851,10 +2922,12 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
     );
   }
 
-  void _openToolsSection() {
+  void _openTicketPortal() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => ToolsPage(language: widget.language, onTool: _openTool),
+        builder: (_) => MalaysiaTicketPortalPage(
+          isBangla: widget.language == AppLanguage.bangla,
+        ),
       ),
     );
   }
@@ -2932,6 +3005,33 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
   }
 
   String _navigationLabel(int index) {
+    if (index == 3) {
+      const communityLabels = <AppLanguage, String>{
+        AppLanguage.english: 'Community',
+        AppLanguage.bangla: 'কমিউনিটি',
+        AppLanguage.malay: 'Komuniti',
+        AppLanguage.indonesian: 'Komunitas',
+        AppLanguage.tamil: 'சமூகம்',
+        AppLanguage.urdu: 'کمیونٹی',
+        AppLanguage.hindi: 'समुदाय',
+        AppLanguage.nepali: 'समुदाय',
+        AppLanguage.burmese: 'အသိုင်းအဝိုင်း',
+        AppLanguage.thai: 'ชุมชน',
+        AppLanguage.khmer: 'សហគមន៍',
+        AppLanguage.filipino: 'Komunidad',
+        AppLanguage.chinese: '社区',
+        AppLanguage.vietnamese: 'Cộng đồng',
+        AppLanguage.sinhala: 'ප්‍රජාව',
+        AppLanguage.korean: '커뮤니티',
+        AppLanguage.japanese: 'コミュニティ',
+        AppLanguage.german: 'Community',
+        AppLanguage.french: 'Communauté',
+        AppLanguage.spanish: 'Comunidad',
+        AppLanguage.arabic: 'المجتمع',
+        AppLanguage.russian: 'Сообщество',
+      };
+      return communityLabels[widget.language] ?? 'Community';
+    }
     const labels = <AppLanguage, List<String>>{
       AppLanguage.english: ['Home', 'Learn', 'Help & info'],
       AppLanguage.bangla: ['হোম', 'শেখা', 'সহায়তা ও তথ্য'],
@@ -2969,7 +3069,7 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
         onService: _openService,
         onTool: _openTool,
         onOpenCountryHub: _openCountryHub,
-        onOpenTools: _openToolsSection,
+        onOpenTicketPortal: _openTicketPortal,
       ),
       _LearningTab(
         language: widget.language,
@@ -2992,6 +3092,7 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
           ),
         ),
       ),
+      CommunityEmailPage(isBangla: widget.language == AppLanguage.bangla),
     ];
     return PopScope<void>(
       canPop: false,
@@ -3005,6 +3106,13 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
             title: _selectedIndex == 0
                 ? _appTitle
                 : _navigationLabel(_selectedIndex),
+            onOpenManual: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => UserManualPage(
+                  isBangla: widget.language == AppLanguage.bangla,
+                ),
+              ),
+            ),
             leading: IconButton(
               tooltip: _copy.backToLanguages,
               onPressed: () => Navigator.of(context).pushReplacement(
@@ -3052,6 +3160,10 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
                 icon: const Icon(Icons.support_agent_outlined),
                 label: _navigationLabel(2),
               ),
+              NavigationDestination(
+                icon: const Icon(Icons.forum_outlined),
+                label: _navigationLabel(3),
+              ),
             ],
           ),
         ),
@@ -3068,7 +3180,7 @@ class _WorkerDashboardTab extends StatelessWidget {
     required this.onService,
     required this.onTool,
     required this.onOpenCountryHub,
-    required this.onOpenTools,
+    required this.onOpenTicketPortal,
   });
 
   final AppLanguage language;
@@ -3077,7 +3189,7 @@ class _WorkerDashboardTab extends StatelessWidget {
   final ValueChanged<ServiceItem> onService;
   final ValueChanged<ToolId> onTool;
   final VoidCallback onOpenCountryHub;
-  final VoidCallback onOpenTools;
+  final VoidCallback onOpenTicketPortal;
 
   @override
   Widget build(BuildContext context) {
@@ -3089,6 +3201,79 @@ class _WorkerDashboardTab extends StatelessWidget {
           officialLogoAsset: service.logoAsset,
           onTap: () => onService(service),
         ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla
+            ? 'সোনার রেফারেন্স রেট'
+            : 'Gold price',
+        icon: Icons.workspace_premium_outlined,
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => CountryGoldReferencePage(language: language),
+          ),
+        ),
+      ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla
+            ? 'সিনেমা টিকিট'
+            : 'Movie tickets',
+        icon: Icons.local_movies_outlined,
+        officialLogoAsset: 'assets/images/official-portals/gsc.png',
+        onTap: onOpenTicketPortal,
+      ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla
+            ? 'আকর্ষণের টিকিট'
+            : 'Attraction tickets',
+        icon: Icons.attractions_outlined,
+        officialLogoAsset: 'assets/images/official-portals/klook.ico',
+        onTap: onOpenTicketPortal,
+      ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla
+            ? 'বর্তমান ইভেন্ট'
+            : 'Current events',
+        icon: Icons.event_available_outlined,
+        officialLogoAsset: 'assets/images/official-portals/dbkl.png',
+        onTap: onOpenTicketPortal,
+      ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla
+            ? 'ছুটির ক্যালেন্ডার'
+            : 'Public holidays',
+        icon: Icons.calendar_month_outlined,
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => HolidayCalendarPage(language: language),
+          ),
+        ),
+      ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla ? 'অনুবাদ' : 'Translate',
+        icon: Icons.translate_rounded,
+        onTap: () => onTool(ToolId.translate),
+      ),
+      _UtilityAction(
+        label: _exchangeTitleFor(language),
+        icon: Icons.currency_exchange_rounded,
+        onTap: () => onTool(ToolId.exchangeRates),
+      ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla ? 'QR স্ক্যানার' : 'QR scanner',
+        icon: Icons.qr_code_scanner_rounded,
+        onTap: () => onTool(ToolId.qrScanner),
+      ),
+      _UtilityAction(
+        label: 'iLovePDF',
+        icon: Icons.picture_as_pdf_outlined,
+        onTap: () => onTool(ToolId.fileConverter),
+      ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla
+            ? 'ভ্রমণ ও ফ্লাইট'
+            : 'Trips & flights',
+        icon: Icons.flight_takeoff_rounded,
+        onTap: () => onTool(ToolId.trips),
+      ),
     ];
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
@@ -3167,15 +3352,6 @@ class _WorkerDashboardTab extends StatelessWidget {
               _UtilityActionTile(action: actions[index]),
         ),
         const SizedBox(height: 24),
-        _UtilityListTile(
-          icon: Icons.build_circle_outlined,
-          title: language == AppLanguage.bangla ? 'টুলস' : 'Tools',
-          subtitle: language == AppLanguage.bangla
-              ? 'অনুবাদ, QR, রেট, ক্যালেন্ডার ও ফাইল কনভার্টার'
-              : 'Translation, QR, rates, calendar, and file converter',
-          onTap: onOpenTools,
-        ),
-        const SizedBox(height: 12),
         if (language != AppLanguage.english) ...[
           _UtilityListTile(
             icon: Icons.public_rounded,
@@ -4344,10 +4520,10 @@ class ServiceHomePage extends StatelessWidget {
 }
 
 class _AppBar extends StatelessWidget implements PreferredSizeWidget {
-  const _AppBar({required this.title, this.leading});
-
+  const _AppBar({required this.title, this.leading, this.onOpenManual});
   final String title;
   final Widget? leading;
+  final VoidCallback? onOpenManual;
 
   @override
   Size get preferredSize => const Size.fromHeight(74);
@@ -4397,6 +4573,12 @@ class _AppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
+        if (onOpenManual != null)
+          IconButton(
+            tooltip: 'User manual video',
+            onPressed: onOpenManual,
+            icon: Icon(Icons.menu_book_rounded, color: foreground),
+          ),
         ValueListenableBuilder<ThemeMode>(
           valueListenable: appThemeMode,
           builder: (context, mode, _) => PopupMenuButton<ThemeMode>(
@@ -9334,6 +9516,32 @@ class BanglaServiceGuidePage extends StatelessWidget {
           icon: const Icon(Icons.open_in_new_rounded),
           label: const Text('অফিসিয়াল EPF / KWSP খুলুন'),
         ),
+        const SizedBox(height: 18),
+        const _BanglaSection(
+          icon: Icons.travel_explore_rounded,
+          title: 'নিরাপদ অভিবাসন ও BMET তথ্য',
+          body: 'বিদেশে কাজ, রিক্রুটিং এজেন্সি, নিবন্ধন ও প্রবাসী কর্মীদের সরকারি তথ্য সম্পর্কে জানতে BMET-এর অফিসিয়াল সাইট দেখুন। কোনো দালাল বা মধ্যস্থতাকারীকে টাকা দেওয়ার আগে তথ্য যাচাই করুন।',
+          color: Color(0xFF1B5E52),
+        ),
+        const SizedBox(height: 10),
+        FilledButton.icon(
+          onPressed: () => _open(context, 'https://bmet.gov.bd/'),
+          icon: const Icon(Icons.open_in_new_rounded),
+          label: const Text('BMET অফিসিয়াল তথ্য খুলুন'),
+        ),
+        const SizedBox(height: 18),
+        const _BanglaSection(
+          icon: Icons.volunteer_activism_outlined,
+          title: 'ওয়েজ আর্নার্স কল্যাণ বোর্ড',
+          body: 'প্রবাসী কর্মীদের কল্যাণ, সহায়তা ও সরকারি সুবিধা সম্পর্কে জানতে ওয়েজ আর্নার্স কল্যাণ বোর্ডের অফিসিয়াল তথ্য দেখুন। যোগ্যতা ও আবেদন প্রক্রিয়া পরিবর্তিত হতে পারে।',
+          color: Color(0xFF314A7E),
+        ),
+        const SizedBox(height: 10),
+        FilledButton.icon(
+          onPressed: () => _open(context, 'https://wewb.gov.bd/'),
+          icon: const Icon(Icons.open_in_new_rounded),
+          label: const Text('কল্যাণ বোর্ডের তথ্য খুলুন'),
+        ),
       ],
     );
   }
@@ -11093,7 +11301,6 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
   bool _showLoading = true;
   bool _loadFailed = false;
   Timer? _loadTimeout;
-  Timer? _progressTimeout;
 
   @override
   void initState() {
@@ -11111,7 +11318,6 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
           onPageStarted: (_) {
             if (!mounted) return;
             _armLoadTimeout();
-            _armProgressTimeout();
             setState(() {
               _loadingProgress = 0;
               _loadFailed = false;
@@ -11144,7 +11350,6 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
         ),
       );
     _armLoadTimeout();
-    _armProgressTimeout();
     _controller.loadRequest(Uri.parse(widget.url));
   }
 
@@ -11160,17 +11365,8 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
     );
   }
 
-  void _armProgressTimeout() {
-    _progressTimeout?.cancel();
-    _progressTimeout = Timer(const Duration(seconds: 6), () {
-      if (!mounted) return;
-      setState(() => _showLoading = false);
-    });
-  }
-
   void _completeLoading() {
     _loadTimeout?.cancel();
-    _progressTimeout?.cancel();
     if (!mounted) return;
     setState(() {
       _loadingProgress = 100;
@@ -11181,7 +11377,6 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
 
   void _failLoading() {
     _loadTimeout?.cancel();
-    _progressTimeout?.cancel();
     if (!mounted) return;
     setState(() {
       _loadFailed = true;
@@ -11197,7 +11392,6 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
       _showLoading = true;
     });
     _armLoadTimeout();
-    _armProgressTimeout();
     _controller.reload();
   }
 
@@ -11208,57 +11402,9 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
     );
   }
 
-  Future<void> _printOrSaveResult() async {
-    try {
-      final raw = await _controller.runJavaScriptReturningResult(
-        'document.body ? document.body.innerText : ""',
-      );
-      final visibleText = raw.toString().replaceAll(r'\n', '\n').trim();
-      final pdf = pw.Document();
-      pdf.addPage(
-        pw.MultiPage(
-          build: (context) => [
-            pw.Header(level: 0, text: widget.title),
-            pw.Paragraph(
-              text: visibleText.isEmpty
-                  ? 'No readable result text was found.'
-                  : visibleText,
-            ),
-            pw.SizedBox(height: 16),
-            pw.Paragraph(text: 'Source: ${widget.url}'),
-            pw.Paragraph(text: 'Generated by FIM - Foreigner in Malaysia.'),
-          ],
-        ),
-      );
-      final bytes = await pdf.save();
-      final directory = await getApplicationDocumentsDirectory();
-      final safeName = widget.title.toLowerCase().replaceAll(
-        RegExp(r'[^a-z0-9]+'),
-        '_',
-      );
-      final file = File('${directory.path}/${safeName}_result.pdf');
-      await file.writeAsBytes(bytes, flush: true);
-      await Printing.sharePdf(bytes: bytes, filename: '${safeName}_result.pdf');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('PDF saved and ready to print: ${file.path}')),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('The result could not be prepared for printing.'),
-          ),
-        );
-      }
-    }
-  }
-
   @override
   void dispose() {
     _loadTimeout?.cancel();
-    _progressTimeout?.cancel();
     _loadingMotion.dispose();
     super.dispose();
   }
@@ -11302,13 +11448,21 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
                 child: _showLoading
-                    ? LinearProgressIndicator(
+                    ? AnimatedBuilder(
                         key: const ValueKey('loading'),
-                        minHeight: 3,
-                        value: _loadingProgress > 0
-                            ? _loadingProgress / 100
-                            : null,
-                        backgroundColor: const Color(0xFFE5E7EB),
+                        animation: _loadingMotion,
+                        builder: (context, _) => LinearProgressIndicator(
+                          minHeight: 3,
+                          value: _loadingProgress > 0
+                              ? _loadingProgress / 100
+                              : null,
+                          backgroundColor: const Color(0xFFE5E7EB),
+                          color: Color.lerp(
+                            AppPalette.flagYellow,
+                            AppPalette.flagRed,
+                            _loadingMotion.value,
+                          ),
+                        ),
                       )
                     : const SizedBox(key: ValueKey('loaded'), height: 3),
               ),
@@ -11327,25 +11481,6 @@ class _StatusWebViewPageState extends State<StatusWebViewPage>
                       ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          floatingActionButton: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              FloatingActionButton.small(
-                heroTag: 'print-result',
-                tooltip: 'Print or save result',
-                onPressed: _printOrSaveResult,
-                child: const Icon(Icons.print_outlined),
-              ),
-              const SizedBox(height: 10),
-              FloatingActionButton.small(
-                heroTag: 'reload-page',
-                tooltip: widget.copy.reload,
-                onPressed: () => _controller.reload(),
-                child: const Icon(Icons.refresh_rounded),
               ),
             ],
           ),

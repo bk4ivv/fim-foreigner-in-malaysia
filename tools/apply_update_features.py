@@ -1,17 +1,25 @@
 from pathlib import Path
 
-path = Path('/home/ubuntu/expat_status_checker/lib/main.dart')
-source = path.read_text()
+PROJECT = Path(__file__).resolve().parents[1]
+MAIN = PROJECT / 'lib' / 'main.dart'
 
-source = source.replace(
-    "import 'package:flutter/material.dart';\n",
-    "import 'package:flutter/material.dart';\nimport 'package:path_provider/path_provider.dart';\nimport 'package:pdf/widgets.dart' as pw;\nimport 'package:printing/printing.dart';\n",
-    1,
-)
+if not MAIN.exists():
+    raise SystemExit(f'Main Dart file not found at {MAIN}')
 
-trips_start = source.index('class TripsPage extends StatelessWidget {')
-tools_start = source.index('class ToolsPage extends StatelessWidget {', trips_start)
-trips_block = r'''enum _TripMode { bus, plane, ferry, train }
+path = MAIN
+source = path.read_text(encoding='utf-8')
+
+if "package:path_provider/path_provider.dart" not in source:
+    source = source.replace(
+        "import 'package:flutter/material.dart';\n",
+        "import 'package:flutter/material.dart';\nimport 'package:path_provider/path_provider.dart';\nimport 'package:pdf/widgets.dart' as pw;\nimport 'package:printing/printing.dart';\n",
+        1,
+    )
+
+if 'const _tripProviders = <_TripMode, List<_TripProvider>>{' not in source:
+    trips_start = source.index('class TripsPage extends StatelessWidget {')
+    tools_start = source.index('class ToolsPage extends StatelessWidget {', trips_start)
+    trips_block = r'''enum _TripMode { bus, plane, ferry, train }
 
 class _TripProvider {
   const _TripProvider({required this.name, required this.url, required this.note});
@@ -234,7 +242,8 @@ class TripProvidersPage extends StatelessWidget {
 }
 
 '''
-source = source[:trips_start] + trips_block + source[tools_start:]
+    if 'class TripsPage extends StatelessWidget {' not in source:
+        source = source[:trips_start] + trips_block + source[tools_start:]
 
 old_fab = '''          floatingActionButton: FloatingActionButton.small(
             tooltip: widget.copy.reload,
@@ -260,9 +269,8 @@ new_fab = '''          floatingActionButton: Column(
               ),
             ],
           ),'''
-if old_fab not in source:
-    raise SystemExit('WebView FAB block not found')
-source = source.replace(old_fab, new_fab, 1)
+if old_fab in source and 'heroTag: \'print-result\'' not in source:
+    source = source.replace(old_fab, new_fab, 1)
 
 anchor = '''  Future<void> _openOutsideApp() async {
     await launchUrl(
@@ -312,9 +320,7 @@ method = r'''
     }
   }
 '''
-if anchor not in source:
-    raise SystemExit('WebView method anchor not found')
-source = source.replace(anchor, anchor + method, 1)
+if anchor in source and '_printOrSaveResult() async' not in source:
+    source = source.replace(anchor, anchor + method, 1)
 
-path.write_text(source)
-天天中彩票被 大发快三如何{
+path.write_text(source, encoding='utf-8')
