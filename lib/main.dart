@@ -11,6 +11,8 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import 'community_email_page.dart';
 import 'fim_help_assistant.dart';
+import 'malaysia_ticket_portal.dart';
+import 'user_manual_page.dart';
 
 const _appTitle = 'FIM - Foreigner in Malaysia';
 const _workerLogoAsset = 'assets/images/foreigner_in_malaysia_logo.png';
@@ -2101,6 +2103,7 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
   late final Future<List<CountryOption>> _countries = _loadCountryOptions();
   final _search = TextEditingController();
   String _query = '';
+  CountryOption? _selectedCountry;
 
   @override
   void dispose() {
@@ -2110,9 +2113,78 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
 
   void _chooseCountry(CountryOption country) {
     activeWorkerCountry.value = country;
-    Navigator.of(context).push(
+    setState(() => _selectedCountry = country);
+  }
+
+  void _chooseLanguage(String languageName) {
+    final country = _selectedCountry;
+    if (country == null) return;
+    final language = _appLanguageForLabel(languageName) ?? AppLanguage.english;
+    activeWorkerLanguage.value = language;
+    Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
-        builder: (_) => CountryLanguageSelectionPage(country: country),
+        builder: (_) => FirstUseGuidePage(
+          language: language,
+          country: country,
+          selectedLanguageName: languageName,
+        ),
+      ),
+    );
+  }
+
+  Widget _languagePanel(BuildContext context) {
+    final country = _selectedCountry;
+    final scheme = Theme.of(context).colorScheme;
+    if (country == null) {
+      return Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: scheme.outline),
+        ),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.translate_rounded),
+            SizedBox(height: 10),
+            Text('LANGUAGE', style: TextStyle(fontWeight: FontWeight.w900)),
+            SizedBox(height: 6),
+            Text(
+              'Select a country first. Its available languages will appear here.',
+            ),
+          ],
+        ),
+      );
+    }
+    final languageNames = {...country.languages, 'English'}.toSet().toList();
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: scheme.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${country.flag}  ${country.name}',
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 5),
+          const Text('LANGUAGE', style: TextStyle(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 8),
+          for (final language in languageNames)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _LanguageChoiceButton(
+                name: language,
+                supported: _appLanguageForLabel(language) != null,
+                onPressed: () => _chooseLanguage(language),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -2273,28 +2345,58 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                CivicSectionLabel(
-                  label: 'COUNTRIES',
-                  trailing: _CountPill(
-                    label: '${snapshot.data!.length} COUNTRIES',
-                  ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final countryPane = Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CivicSectionLabel(
+                          label: 'COUNTRY',
+                          trailing: _CountPill(
+                            label: '${snapshot.data!.length} COUNTRIES',
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        for (final country in countries)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 9),
+                            child: _CountryButton(
+                              country: country,
+                              onPressed: () => _chooseCountry(country),
+                            ),
+                          ),
+                        if (countries.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 32),
+                            child: Center(
+                              child: Text(
+                                'No country found. Try another spelling.',
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                    final languagePane = _languagePanel(context);
+                    if (constraints.maxWidth >= 720) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: countryPane),
+                          const SizedBox(width: 16),
+                          Expanded(child: languagePane),
+                        ],
+                      );
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        countryPane,
+                        const SizedBox(height: 16),
+                        languagePane,
+                      ],
+                    );
+                  },
                 ),
-                const SizedBox(height: 10),
-                for (final country in countries)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 9),
-                    child: _CountryButton(
-                      country: country,
-                      onPressed: () => _chooseCountry(country),
-                    ),
-                  ),
-                if (countries.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 32),
-                    child: Center(
-                      child: Text('No country found. Try another spelling.'),
-                    ),
-                  ),
               ],
             );
           },
@@ -2488,7 +2590,7 @@ class FirstUseGuidePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 26),
                 Text(
-                  guide.question,
+                  copy.servicePageTitle,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: const Color(0xFF163A38),
@@ -2547,45 +2649,13 @@ class FirstUseGuidePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: () {
-                    showModalBottomSheet<void>(
-                      context: context,
-                      builder: (sheetContext) => Directionality(
-                        textDirection: copy.direction,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 30),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.ondemand_video_outlined,
-                                color: Color(0xFF0E5C57),
-                                size: 34,
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                guide.videoPending,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Color(0xFF385852),
-                                  fontSize: 14,
-                                  height: 1.45,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(sheetContext).pop();
-                                  _continue(context);
-                                },
-                                child: Text(guide.continueAnyway),
-                              ),
-                            ],
-                          ),
-                        ),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => UserManualPage(
+                        isBangla: language == AppLanguage.bangla,
                       ),
-                    );
-                  },
+                    ),
+                  ),
                   icon: const Icon(Icons.play_circle_outline_rounded),
                   label: Text(guide.videoLabel),
                   style: OutlinedButton.styleFrom(
@@ -2850,10 +2920,12 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
     );
   }
 
-  void _openToolsSection() {
+  void _openTicketPortal() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => ToolsPage(language: widget.language, onTool: _openTool),
+        builder: (_) => MalaysiaTicketPortalPage(
+          isBangla: widget.language == AppLanguage.bangla,
+        ),
       ),
     );
   }
@@ -2995,7 +3067,7 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
         onService: _openService,
         onTool: _openTool,
         onOpenCountryHub: _openCountryHub,
-        onOpenTools: _openToolsSection,
+        onOpenTicketPortal: _openTicketPortal,
       ),
       _LearningTab(
         language: widget.language,
@@ -3032,6 +3104,13 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
             title: _selectedIndex == 0
                 ? _appTitle
                 : _navigationLabel(_selectedIndex),
+            onOpenManual: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => UserManualPage(
+                  isBangla: widget.language == AppLanguage.bangla,
+                ),
+              ),
+            ),
             leading: IconButton(
               tooltip: _copy.backToLanguages,
               onPressed: () => Navigator.of(context).pushReplacement(
@@ -3099,7 +3178,7 @@ class _WorkerDashboardTab extends StatelessWidget {
     required this.onService,
     required this.onTool,
     required this.onOpenCountryHub,
-    required this.onOpenTools,
+    required this.onOpenTicketPortal,
   });
 
   final AppLanguage language;
@@ -3108,7 +3187,7 @@ class _WorkerDashboardTab extends StatelessWidget {
   final ValueChanged<ServiceItem> onService;
   final ValueChanged<ToolId> onTool;
   final VoidCallback onOpenCountryHub;
-  final VoidCallback onOpenTools;
+  final VoidCallback onOpenTicketPortal;
 
   @override
   Widget build(BuildContext context) {
@@ -3120,6 +3199,79 @@ class _WorkerDashboardTab extends StatelessWidget {
           officialLogoAsset: service.logoAsset,
           onTap: () => onService(service),
         ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla
+            ? 'সোনার রেফারেন্স রেট'
+            : 'Gold price',
+        icon: Icons.workspace_premium_outlined,
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => CountryGoldReferencePage(language: language),
+          ),
+        ),
+      ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla
+            ? 'সিনেমা টিকিট'
+            : 'Movie tickets',
+        icon: Icons.local_movies_outlined,
+        officialLogoAsset: 'assets/images/official-portals/gsc.png',
+        onTap: onOpenTicketPortal,
+      ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla
+            ? 'আকর্ষণের টিকিট'
+            : 'Attraction tickets',
+        icon: Icons.attractions_outlined,
+        officialLogoAsset: 'assets/images/official-portals/klook.ico',
+        onTap: onOpenTicketPortal,
+      ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla
+            ? 'বর্তমান ইভেন্ট'
+            : 'Current events',
+        icon: Icons.event_available_outlined,
+        officialLogoAsset: 'assets/images/official-portals/dbkl.png',
+        onTap: onOpenTicketPortal,
+      ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla
+            ? 'ছুটির ক্যালেন্ডার'
+            : 'Public holidays',
+        icon: Icons.calendar_month_outlined,
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => HolidayCalendarPage(language: language),
+          ),
+        ),
+      ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla ? 'অনুবাদ' : 'Translate',
+        icon: Icons.translate_rounded,
+        onTap: () => onTool(ToolId.translate),
+      ),
+      _UtilityAction(
+        label: _exchangeTitleFor(language),
+        icon: Icons.currency_exchange_rounded,
+        onTap: () => onTool(ToolId.exchangeRates),
+      ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla ? 'QR স্ক্যানার' : 'QR scanner',
+        icon: Icons.qr_code_scanner_rounded,
+        onTap: () => onTool(ToolId.qrScanner),
+      ),
+      _UtilityAction(
+        label: 'iLovePDF',
+        icon: Icons.picture_as_pdf_outlined,
+        onTap: () => onTool(ToolId.fileConverter),
+      ),
+      _UtilityAction(
+        label: language == AppLanguage.bangla
+            ? 'ভ্রমণ ও ফ্লাইট'
+            : 'Trips & flights',
+        icon: Icons.flight_takeoff_rounded,
+        onTap: () => onTool(ToolId.trips),
+      ),
     ];
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
@@ -3198,15 +3350,6 @@ class _WorkerDashboardTab extends StatelessWidget {
               _UtilityActionTile(action: actions[index]),
         ),
         const SizedBox(height: 24),
-        _UtilityListTile(
-          icon: Icons.build_circle_outlined,
-          title: language == AppLanguage.bangla ? 'টুলস' : 'Tools',
-          subtitle: language == AppLanguage.bangla
-              ? 'অনুবাদ, QR, রেট, ক্যালেন্ডার ও ফাইল কনভার্টার'
-              : 'Translation, QR, rates, calendar, and file converter',
-          onTap: onOpenTools,
-        ),
-        const SizedBox(height: 12),
         if (language != AppLanguage.english) ...[
           _UtilityListTile(
             icon: Icons.public_rounded,
@@ -4375,10 +4518,10 @@ class ServiceHomePage extends StatelessWidget {
 }
 
 class _AppBar extends StatelessWidget implements PreferredSizeWidget {
-  const _AppBar({required this.title, this.leading});
-
+  const _AppBar({required this.title, this.leading, this.onOpenManual});
   final String title;
   final Widget? leading;
+  final VoidCallback? onOpenManual;
 
   @override
   Size get preferredSize => const Size.fromHeight(74);
@@ -4428,6 +4571,12 @@ class _AppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
+        if (onOpenManual != null)
+          IconButton(
+            tooltip: 'User manual video',
+            onPressed: onOpenManual,
+            icon: Icon(Icons.menu_book_rounded, color: foreground),
+          ),
         ValueListenableBuilder<ThemeMode>(
           valueListenable: appThemeMode,
           builder: (context, mode, _) => PopupMenuButton<ThemeMode>(
