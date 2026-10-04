@@ -35,6 +35,7 @@ const _attractionLinks = <MalaysiaPortalLink>[
     name: 'Ticket2U',
     description: 'Malaysia events, theme parks, and attraction tickets.',
     url: 'https://www.ticket2u.com.my/event/list',
+    logoAsset: 'assets/images/official-portals/ticket2u.ico',
   ),
   MalaysiaPortalLink(
     name: 'Klook Malaysia',
