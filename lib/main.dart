@@ -2094,312 +2094,314 @@ class LanguageSelectionPage extends StatelessWidget {
 
 class CountrySelectionPage extends StatefulWidget {
   const CountrySelectionPage({super.key});
-
   @override
   State<CountrySelectionPage> createState() => _CountrySelectionPageState();
 }
 
 class _CountrySelectionPageState extends State<CountrySelectionPage> {
   late final Future<List<CountryOption>> _countries = _loadCountryOptions();
-  final _search = TextEditingController();
-  String _query = '';
   CountryOption? _selectedCountry;
-
-  @override
-  void dispose() {
-    _search.dispose();
-    super.dispose();
-  }
+  String? _selectedLanguageName;
+  AppLanguage? _selectedLanguage;
 
   void _chooseCountry(CountryOption country) {
+    final suggested = _countryLanguageDefaults[country.code];
+    final suggestedName = suggested == null
+        ? 'English'
+        : appCopies[suggested]!.languageName;
+    setState(() {
+      _selectedCountry = country;
+      _selectedLanguage = suggested ?? AppLanguage.english;
+      _selectedLanguageName = suggestedName;
+    });
     activeWorkerCountry.value = country;
-    setState(() => _selectedCountry = country);
   }
 
   void _chooseLanguage(String languageName) {
+    final language = _appLanguageForLabel(languageName);
+    setState(() {
+      _selectedLanguageName = languageName;
+      _selectedLanguage = language ?? AppLanguage.english;
+    });
+  }
+
+  Future<void> _openCountryPicker() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        var query = '';
+        return StatefulBuilder(
+          builder: (context, setSheetState) => SafeArea(
+            child: SizedBox(
+              height: MediaQuery.sizeOf(context).height * 0.82,
+              child: FutureBuilder<List<CountryOption>>(
+                future: _countries,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final countries = snapshot.data!
+                      .where(
+                        (country) => country.name.toLowerCase().contains(
+                          query.trim().toLowerCase(),
+                        ),
+                      )
+                      .toList(growable: false);
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Select Country/Region',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          autofocus: true,
+                          onChanged: (value) =>
+                              setSheetState(() => query = value),
+                          decoration: const InputDecoration(
+                            prefixIcon: Icon(Icons.search_rounded),
+                            hintText: 'Search country or region',
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: countries.length,
+                            itemBuilder: (_, index) {
+                              final country = countries[index];
+                              return _CountryButton(
+                                country: country,
+                                onPressed: () {
+                                  _chooseCountry(country);
+                                  Navigator.of(sheetContext).pop();
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openLanguagePicker() async {
     final country = _selectedCountry;
-    if (country == null) return;
-    final language = _appLanguageForLabel(languageName) ?? AppLanguage.english;
-    activeWorkerLanguage.value = language;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (_) => FirstUseGuidePage(
-          language: language,
-          country: country,
-          selectedLanguageName: languageName,
+    if (country == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please choose a country/region first.')),
+      );
+      return;
+    }
+    final languageNames = {...country.languages, 'English'}.toList();
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          children: [
+            Text(
+              'Select Language',
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 12),
+            for (final language in languageNames)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 9),
+                child: _LanguageChoiceButton(
+                  name: language,
+                  supported: _appLanguageForLabel(language) != null,
+                  onPressed: () {
+                    _chooseLanguage(language);
+                    Navigator.of(sheetContext).pop();
+                  },
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _languagePanel(BuildContext context) {
+  void _done() {
     final country = _selectedCountry;
-    final scheme = Theme.of(context).colorScheme;
-    if (country == null) {
-      return Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: scheme.surface,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: scheme.outline),
-        ),
-        child: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.translate_rounded),
-            SizedBox(height: 10),
-            Text('LANGUAGE', style: TextStyle(fontWeight: FontWeight.w900)),
-            SizedBox(height: 6),
-            Text(
-              'Select a country first. Its available languages will appear here.',
-            ),
-          ],
+    final language = _selectedLanguage;
+    if (country == null || language == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please choose a country/region and language.'),
         ),
       );
+      return;
     }
-    final languageNames = {...country.languages, 'English'}.toSet().toList();
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: scheme.outline),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${country.flag}  ${country.name}',
-            style: const TextStyle(fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 5),
-          const Text('LANGUAGE', style: TextStyle(fontWeight: FontWeight.w900)),
-          const SizedBox(height: 8),
-          for (final language in languageNames)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _LanguageChoiceButton(
-                name: language,
-                supported: _appLanguageForLabel(language) != null,
-                onPressed: () => _chooseLanguage(language),
-              ),
-            ),
-        ],
+    activeWorkerCountry.value = country;
+    activeWorkerLanguage.value = language;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(
+        builder: (_) => WorkerUtilityShellPage(language: language),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final copy = appCopies[AppLanguage.english]!;
+    final country = _selectedCountry;
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: _AppBar(title: _appTitle),
-      bottomNavigationBar: _CompactCreditBar(
-        copy: copy,
-        onOpenProfile: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => CreatorProfilePage(copy: copy),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFA8E5D5),
+        foregroundColor: const Color(0xFF0A1D1D),
+        leadingWidth: 84,
+        leading: TextButton(
+          onPressed: () => Navigator.of(context).maybePop(),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(color: Color(0xFF0A1D1D)),
+          ),
+        ),
+        title: const Text(
+          'Country/Region & Language',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF0A1D1D),
           ),
         ),
       ),
       body: SafeArea(
-        child: FutureBuilder<List<CountryOption>>(
-          future: _countries,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.cloud_off_rounded,
-                        size: 42,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        'Country data could not be loaded',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleLarge
-                            ?.copyWith(fontWeight: FontWeight.w900),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Please try again. Your app content is kept on this device.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface
-                              .withValues(alpha: 0.68),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      FilledButton.icon(
-                        onPressed: () => Navigator.of(context).pushReplacement(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const CountrySelectionPage(),
-                          ),
-                        ),
-                        icon: const Icon(Icons.refresh_rounded),
-                        label: const Text('Try again'),
-                      ),
-                    ],
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(28, 42, 28, 30),
+          children: [
+            Text(
+              'Which country/region and language do you want to use?',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: scheme.onSurface,
+                fontWeight: FontWeight.w500,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 28),
+            _RegionLanguageCard(
+              title: 'Country/Region:',
+              value: country == null
+                  ? 'Choose your country or region'
+                  : '${country.flag}  ${country.name}',
+              onTap: _openCountryPicker,
+            ),
+            const SizedBox(height: 12),
+            _RegionLanguageCard(
+              title: 'Language:',
+              value: _selectedLanguageName ?? 'Choose a language',
+              enabled: country != null,
+              onTap: _openLanguagePicker,
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              height: 58,
+              child: FilledButton(
+                onPressed: _done,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppPalette.flagYellow,
+                  foregroundColor: AppPalette.flagNavy,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              );
-            }
-            if (!snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final countries = snapshot.data!
-                .where(
-                  (country) => country.name.toLowerCase().contains(
-                    _query.trim().toLowerCase(),
-                  ),
-                )
-                .toList(growable: false);
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
-              children: [
-                CivicHeroPanel(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(18),
-                        child: Image.asset(
-                          _workerLogoAsset,
-                          width: 78,
-                          height: 78,
-                          fit: BoxFit.cover,
-                          semanticLabel:
-                              'FIM - Foreigner in Malaysia worker illustration',
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _HeroStatusPill(label: 'WORKER UTILITY · MALAYSIA'),
-                            SizedBox(height: 10),
-                            Text(
-                              'Choose your country first',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 23,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.9,
-                                height: 1.03,
-                              ),
-                            ),
-                            SizedBox(height: 7),
-                            Text(
-                              'Then choose your national language or English.',
-                              style: TextStyle(
-                                color: Color(0xFFD3E5E0),
-                                fontSize: 11.5,
-                                height: 1.35,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Where are you from?',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  'We will show official support routes and languages for your country. Work permission still depends on current Malaysian rules and your permit.',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface
-                        .withValues(alpha: 0.68),
-                    fontSize: 14,
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _search,
-                  onChanged: (value) => setState(() => _query = value),
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search_rounded),
-                    hintText: 'Search every country',
-                    filled: true,
-                    fillColor: Theme.of(context).colorScheme.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final countryPane = Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CivicSectionLabel(
-                          label: 'COUNTRY',
-                          trailing: _CountPill(
-                            label: '${snapshot.data!.length} COUNTRIES',
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        for (final country in countries)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 9),
-                            child: _CountryButton(
-                              country: country,
-                              onPressed: () => _chooseCountry(country),
-                            ),
-                          ),
-                        if (countries.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 32),
-                            child: Center(
-                              child: Text(
-                                'No country found. Try another spelling.',
-                              ),
-                            ),
-                          ),
-                      ],
-                    );
-                    final languagePane = _languagePanel(context);
-                    if (constraints.maxWidth >= 720) {
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: countryPane),
-                          const SizedBox(width: 16),
-                          Expanded(child: languagePane),
-                        ],
-                      );
-                    }
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        countryPane,
-                        const SizedBox(height: 16),
-                        languagePane,
-                      ],
-                    );
-                  },
+                child: const Text('Done'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RegionLanguageCard extends StatelessWidget {
+  const _RegionLanguageCard({
+    required this.title,
+    required this.value,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  final String title;
+  final String value;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surface,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(14),
+        child: Opacity(
+          opacity: enabled ? 1 : 0.48,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(22, 16, 14, 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: scheme.outline.withValues(alpha: 0.62)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x12000000),
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
                 ),
               ],
-            );
-          },
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(color: scheme.onSurface, fontSize: 16),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        value,
+                        style: TextStyle(
+                          color: scheme.onSurface,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: scheme.onSurface,
+                  size: 28,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
