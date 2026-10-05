@@ -208,6 +208,32 @@ void main() {
     },
   );
 
+  testWidgets('non-Bangla learning portals do not leak Bangla text', (
+    tester,
+  ) async {
+    bool hasBanglaScript(String value) =>
+        RegExp(r'[\u0980-\u09FF]').hasMatch(value);
+
+    for (final language in AppLanguage.values.where(
+      (language) => language != AppLanguage.bangla,
+    )) {
+      await tester.pumpWidget(
+        MaterialApp(home: CountryPhrasebookPage(language: language)),
+      );
+      await tester.pump(const Duration(milliseconds: 800));
+      await tester.pump();
+      final visibleText = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((text) => text.data ?? text.textSpan?.toPlainText() ?? '')
+          .join(' ');
+      expect(
+        hasBanglaScript(visibleText),
+        isFalse,
+        reason: '$language leaked Bangla text',
+      );
+    }
+  });
+
   testWidgets('Trips starts with bus, plane, ferry, and train choices', (
     tester,
   ) async {

@@ -8353,6 +8353,107 @@ String _learningSearchHint(AppLanguage language) => switch (language) {
   AppLanguage.russian => 'Поиск малайских слов или фраз',
   AppLanguage.english => 'Search Malay words or phrases',
 };
+String _learningSentencesLabel(AppLanguage language) => switch (language) {
+  AppLanguage.bangla => 'বাক্য',
+  AppLanguage.hindi => 'वाक्य',
+  AppLanguage.urdu => 'جملے',
+  AppLanguage.nepali => 'वाक्यहरू',
+  AppLanguage.malay => 'Ayat',
+  AppLanguage.indonesian => 'Kalimat',
+  AppLanguage.tamil => 'வாக்கியங்கள்',
+  AppLanguage.chinese => '句子',
+  AppLanguage.thai => 'ประโยค',
+  AppLanguage.vietnamese => 'Câu',
+  AppLanguage.burmese => 'ဝါကျများ',
+  AppLanguage.khmer => 'ប្រយោគ',
+  AppLanguage.filipino => 'Mga pangungusap',
+  AppLanguage.sinhala => 'වාක්‍ය',
+  AppLanguage.korean => '문장',
+  AppLanguage.japanese => '文章',
+  AppLanguage.german => 'Sätze',
+  AppLanguage.french => 'Phrases',
+  AppLanguage.spanish => 'Frases',
+  AppLanguage.arabic => 'الجمل',
+  AppLanguage.russian => 'Фразы',
+  AppLanguage.english => 'Sentences',
+};
+String _learningWordsLabel(AppLanguage language) => switch (language) {
+  AppLanguage.bangla => 'শব্দ',
+  AppLanguage.hindi => 'शब्द',
+  AppLanguage.urdu => 'الفاظ',
+  AppLanguage.nepali => 'शब्दहरू',
+  AppLanguage.malay => 'Perkataan',
+  AppLanguage.indonesian => 'Kata',
+  AppLanguage.tamil => 'சொற்கள்',
+  AppLanguage.chinese => '词语',
+  AppLanguage.thai => 'คำศัพท์',
+  AppLanguage.vietnamese => 'Từ',
+  AppLanguage.burmese => 'စကားလုံးများ',
+  AppLanguage.khmer => 'ពាក្យ',
+  AppLanguage.filipino => 'Mga salita',
+  AppLanguage.sinhala => 'වචන',
+  AppLanguage.korean => '단어',
+  AppLanguage.japanese => '単語',
+  AppLanguage.german => 'Wörter',
+  AppLanguage.french => 'Mots',
+  AppLanguage.spanish => 'Palabras',
+  AppLanguage.arabic => 'الكلمات',
+  AppLanguage.russian => 'Слова',
+  AppLanguage.english => 'Words',
+};
+String _learningSectionLabel(AppLanguage language, bool sentences) =>
+    language == AppLanguage.bangla
+    ? (sentences ? 'মালয় বাক্য' : 'মালয় শব্দ')
+    : '${sentences ? _learningSentencesLabel(language) : _learningWordsLabel(language)} · Malay';
+String _learningCategoryLabel(AppLanguage language, String category) {
+  if (language == AppLanguage.bangla) return category;
+  const english = <String, String>{
+    'শুভেচ্ছা ও ভদ্রতা': 'Greetings & courtesy',
+    'মানুষ ও দৈনন্দিন কথা': 'People & daily conversation',
+    'কাজ ও কারখানা': 'Work & factory',
+    'ক্লিনিক ও স্বাস্থ্য': 'Clinic & health',
+    'জরুরি ও নিরাপত্তা': 'Emergency & safety',
+    'দোকান ও খাবার': 'Shopping & food',
+    'বাসা ও সুবিধা': 'Home & facilities',
+    'বেতন, সময় ও ছুটি': 'Pay, time & leave',
+    'ব্যাংক, টাকা ও ফোন': 'Banking, money & phone',
+    'যাতায়াত ও রাস্তা': 'Transport & roads',
+    'সরকারি কাজ ও নথি': 'Government & documents',
+    'প্রতিদিনের শব্দভান্ডার': 'Everyday vocabulary',
+    'সাধারণ শব্দ': 'Common word',
+  };
+  return english[category] ?? 'Malay learning';
+}
+
+String _learningPronunciationLabel(
+  AppLanguage language,
+  String pronunciation,
+) => language == AppLanguage.bangla
+    ? pronunciation
+    : switch (language) {
+        AppLanguage.hindi => 'उच्चारण सुनने के लिए टैप करें',
+        AppLanguage.urdu => 'تلفظ سننے کے لیے ٹیپ کریں',
+        AppLanguage.malay => 'Ketik untuk dengar sebutan',
+        AppLanguage.indonesian => 'Ketuk untuk mendengar pelafalan',
+        AppLanguage.tamil => 'உச்சரிப்பைக் கேட்கத் தட்டவும்',
+        AppLanguage.chinese => '点击听发音',
+        AppLanguage.thai => 'แตะเพื่อฟังการออกเสียง',
+        AppLanguage.vietnamese => 'Chạm để nghe cách phát âm',
+        AppLanguage.burmese => 'အသံထွက်နားထောင်ရန် နှိပ်ပါ',
+        AppLanguage.khmer => 'ចុចដើម្បីស្តាប់ការបញ្ចេញសំឡេង',
+        AppLanguage.filipino => 'I-tap para marinig ang bigkas',
+        AppLanguage.sinhala => 'උච්චාරණය ඇසීමට තට්ටු කරන්න',
+        AppLanguage.korean => '발음을 들으려면 탭하세요',
+        AppLanguage.japanese => '発音を聞くにはタップ',
+        AppLanguage.german => 'Tippen, um die Aussprache zu hören',
+        AppLanguage.french => 'Touchez pour écouter la prononciation',
+        AppLanguage.spanish => 'Toca para escuchar la pronunciación',
+        AppLanguage.arabic => 'اضغط لسماع النطق',
+        AppLanguage.russian => 'Нажмите, чтобы услышать произношение',
+        AppLanguage.nepali => 'उच्चारण सुन्न ट्याप गर्नुहोस्',
+        AppLanguage.english => 'Tap to hear pronunciation',
+        AppLanguage.bangla => pronunciation,
+      };
 
 String _learningNoMatch(AppLanguage language) => switch (language) {
   AppLanguage.bangla => 'মিল পাওয়া যায়নি।',
@@ -8496,7 +8597,7 @@ class _CountryPhrasebookPageState extends State<CountryPhrasebookPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                '${library.sentences.length} Malay sentences · ${library.words.length} Malay words. ${profile.phrasebookSubtitle}',
+                '${library.sentences.length} ${_learningSentencesLabel(widget.language)} · ${library.words.length} ${_learningWordsLabel(widget.language)}. ${profile.phrasebookSubtitle}',
                 style: const TextStyle(
                   color: Color(0xFFD6E2F5),
                   fontSize: 12.5,
@@ -8511,7 +8612,7 @@ class _CountryPhrasebookPageState extends State<CountryPhrasebookPage> {
           children: [
             Expanded(
               child: _LanguageLibraryModeCard(
-                label: 'Sentences',
+                label: _learningSentencesLabel(widget.language),
                 count: '${library.sentences.length}',
                 icon: Icons.chat_bubble_outline_rounded,
                 selected: sentenceMode,
@@ -8521,7 +8622,7 @@ class _CountryPhrasebookPageState extends State<CountryPhrasebookPage> {
             const SizedBox(width: 10),
             Expanded(
               child: _LanguageLibraryModeCard(
-                label: 'Words',
+                label: _learningWordsLabel(widget.language),
                 count: '${library.words.length}',
                 icon: Icons.menu_book_outlined,
                 selected: !sentenceMode,
@@ -8565,13 +8666,7 @@ class _CountryPhrasebookPageState extends State<CountryPhrasebookPage> {
         ),
         const SizedBox(height: 18),
         CivicSectionLabel(
-          label: sentenceMode
-              ? (widget.language == AppLanguage.bangla
-                    ? 'মালয় বাক্য'
-                    : 'Malay sentences')
-              : (widget.language == AppLanguage.bangla
-                    ? 'মালয় শব্দ'
-                    : 'Malay words'),
+          label: _learningSectionLabel(widget.language, sentenceMode),
           trailing: _CountPill(label: '${items.length} results'),
         ),
         const SizedBox(height: 12),
@@ -8789,7 +8884,7 @@ class _CountryLibraryItemCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    item.pronunciation,
+                    _learningPronunciationLabel(language, item.pronunciation),
                     style: TextStyle(
                       color: scheme.primary,
                       fontSize: 12,
@@ -8811,7 +8906,7 @@ class _CountryLibraryItemCard extends StatelessWidget {
               ),
             ),
             Text(
-              item.label,
+              _learningCategoryLabel(language, item.label),
               style: TextStyle(
                 color: scheme.primary,
                 fontSize: 10,
