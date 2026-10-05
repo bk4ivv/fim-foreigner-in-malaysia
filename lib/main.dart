@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -2283,52 +2284,196 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
         ),
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(28, 42, 28, 30),
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            Text(
-              'Which country/region and language do you want to use?',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: scheme.onSurface,
-                fontWeight: FontWeight.w500,
-                height: 1.35,
-              ),
-            ),
-            const SizedBox(height: 28),
-            _RegionLanguageCard(
-              title: 'Country/Region:',
-              value: country == null
-                  ? 'Choose your country or region'
-                  : '${country.flag}  ${country.name}',
-              onTap: _openCountryPicker,
-            ),
-            const SizedBox(height: 12),
-            _RegionLanguageCard(
-              title: 'Language:',
-              value: _selectedLanguageName ?? 'Choose a language',
-              enabled: country != null,
-              onTap: _openLanguagePicker,
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              height: 58,
-              child: FilledButton(
-                onPressed: _done,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppPalette.flagYellow,
-                  foregroundColor: AppPalette.flagNavy,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+            const _MultilingualWelcomeMotion(),
+            ListView(
+              padding: const EdgeInsets.fromLTRB(28, 42, 28, 30),
+              children: [
+                Text(
+                  'Which country/region and language do you want to use?',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: scheme.onSurface,
+                    fontWeight: FontWeight.w500,
+                    height: 1.35,
                   ),
                 ),
-                child: const Text('Done'),
-              ),
+                const SizedBox(height: 28),
+                _RegionLanguageCard(
+                  title: 'Country/Region:',
+                  value: country == null
+                      ? 'Choose your country or region'
+                      : '${country.flag}  ${country.name}',
+                  onTap: _openCountryPicker,
+                ),
+                const SizedBox(height: 12),
+                _RegionLanguageCard(
+                  title: 'Language:',
+                  value: _selectedLanguageName ?? 'Choose a language',
+                  enabled: country != null,
+                  onTap: _openLanguagePicker,
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  height: 58,
+                  child: FilledButton(
+                    onPressed: _done,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppPalette.flagYellow,
+                      foregroundColor: AppPalette.flagNavy,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    child: const Text('Done'),
+                  ),
+                ),
+              ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+const _welcomeLanguageWords = <String>[
+  'Select your country',
+  'আপনার দেশ নির্বাচন করুন',
+  'अपना देश चुनें',
+  '选择你的国家',
+  'Choisissez votre pays',
+  'Elige tu país',
+  'اختر بلدك',
+  'あなたの国を選択',
+  'Pilih negara anda',
+  'Выберите свою страну',
+];
+
+class _MultilingualWelcomeMotion extends StatefulWidget {
+  const _MultilingualWelcomeMotion();
+
+  @override
+  State<_MultilingualWelcomeMotion> createState() =>
+      _MultilingualWelcomeMotionState();
+}
+
+class _MultilingualWelcomeMotionState extends State<_MultilingualWelcomeMotion>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 20),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (!WidgetsBinding
+        .instance
+        .platformDispatcher
+        .accessibilityFeatures
+        .disableAnimations) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    return IgnorePointer(
+      child: ClipRect(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) => LayoutBuilder(
+            builder: (context, constraints) {
+              final t = reduceMotion ? 0.5 : _controller.value;
+              final travel = constraints.maxWidth + 760;
+              return Stack(
+                children: [
+                  _welcomeLane(
+                    top: constraints.maxHeight * 0.12,
+                    x: -420 + travel * t,
+                    text: _welcomeLanguageWords,
+                    size: 27,
+                    opacity: 0.16,
+                  ),
+                  _welcomeLane(
+                    top: constraints.maxHeight * 0.31,
+                    x: constraints.maxWidth + 120 - travel * t,
+                    text: _welcomeLanguageWords.reversed.toList(),
+                    size: 22,
+                    opacity: 0.12,
+                  ),
+                  _welcomeLane(
+                    top: constraints.maxHeight * 0.56,
+                    x: -620 + travel * (1 - t),
+                    text: _welcomeLanguageWords,
+                    size: 31,
+                    opacity: 0.13,
+                  ),
+                  _welcomeLane(
+                    top: constraints.maxHeight * 0.77,
+                    x: constraints.maxWidth + 80 - travel * (1 - t),
+                    text: _welcomeLanguageWords.reversed.toList(),
+                    size: 24,
+                    opacity: 0.11,
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _welcomeLane({
+    required double top,
+    required double x,
+    required List<String> text,
+    required double size,
+    required double opacity,
+  }) {
+    final textColor = Theme.of(context).brightness == Brightness.dark
+        ? Colors.white
+        : AppPalette.flagNavy;
+    return Positioned(
+      top: top,
+      left: 0,
+      child: Transform.translate(
+        offset: Offset(x, math.sin(_controller.value * math.pi * 2) * 8),
+        child: Opacity(
+          opacity: opacity,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final word in text) ...[
+                Text(
+                  word,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: size,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.6,
+                  ),
+                ),
+                const SizedBox(width: 52),
+              ],
+            ],
+          ),
         ),
       ),
     );

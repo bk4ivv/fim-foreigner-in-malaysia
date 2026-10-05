@@ -72,6 +72,16 @@ void main() {
     expect(find.byType(LinearProgressIndicator), findsNothing);
   });
 
+  testWidgets(
+    'first interface includes the visible multilingual motion layer',
+    (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: CountrySelectionPage()));
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('আপনার দেশ নির্বাচন করুন'), findsNWidgets(4));
+      expect(find.text('اختر بلدك'), findsNWidgets(4));
+    },
+  );
+
   testWidgets('provides Home, Learn, Help, and Community destinations', (
     tester,
   ) async {
