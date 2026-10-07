@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:expat_status_checker/main.dart';
 import 'package:expat_status_checker/community_email_page.dart';
+import 'package:expat_status_checker/expat_experience_map.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -99,6 +100,36 @@ void main() {
     expect(find.text('Community'), findsOneWidget);
     expect(find.text('Account'), findsNothing);
     expect(find.text('Visa Status'), findsOneWidget);
+  });
+  testWidgets('opens the FIM menu with the Experience Map shortcut', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: WorkerUtilityShellPage(language: AppLanguage.english),
+      ),
+    );
+    await tester.tap(find.byTooltip('Open FIM menu'));
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.text('FIM menu'), findsOneWidget);
+    expect(find.text('Experience map'), findsOneWidget);
+    expect(find.text('Tickets & events'), findsOneWidget);
+    expect(find.text('Daily tools'), findsOneWidget);
+    expect(find.text('Games'), findsOneWidget);
+  });
+  testWidgets('renders the Experience Map safety and sharing controls', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: ExpatExperienceMapPage()));
+    expect(find.text('Malaysia through expat eyes'), findsOneWidget);
+    expect(find.text('Community experiences'), findsOneWidget);
+    expect(find.text('Share experience'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Safety and moderation'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Safety and moderation'), findsOneWidget);
   });
 
   testWidgets('renders the email-based Community post and report choices', (

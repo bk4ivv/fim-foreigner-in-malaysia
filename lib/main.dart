@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'community_email_page.dart';
+import 'expat_experience_map.dart';
 import 'fim_help_assistant.dart';
 import 'malaysia_ticket_portal.dart';
 import 'user_manual_page.dart';
@@ -2964,6 +2965,7 @@ class WorkerUtilityShellPage extends StatefulWidget {
 }
 
 class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   var _selectedIndex = 0;
   var _isExitPromptOpen = false;
 
@@ -3074,6 +3076,30 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
           isBangla: widget.language == AppLanguage.bangla,
         ),
       ),
+    );
+  }
+
+  void _openExperienceMap() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ExpatExperienceMapPage(
+          isBangla: widget.language == AppLanguage.bangla,
+        ),
+      ),
+    );
+  }
+
+  void _openToolsPage() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ToolsPage(language: widget.language, onTool: _openTool),
+      ),
+    );
+  }
+
+  void _showGamesComingSoon() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('FIM games are coming in a future update.')),
     );
   }
 
@@ -3247,6 +3273,25 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
       child: Directionality(
         textDirection: _copy.direction,
         child: Scaffold(
+          key: _scaffoldKey,
+          drawer: _FimMenuDrawer(
+            language: widget.language,
+            onGovernment: _openCountryHub,
+            onTickets: _openTicketPortal,
+            onExperienceMap: _openExperienceMap,
+            onTools: _openToolsPage,
+            onGames: _showGamesComingSoon,
+            onLearn: () => setState(() => _selectedIndex = 1),
+            onHelp: () => setState(() => _selectedIndex = 2),
+            onCommunity: () => setState(() => _selectedIndex = 3),
+            onManual: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => UserManualPage(
+                  isBangla: widget.language == AppLanguage.bangla,
+                ),
+              ),
+            ),
+          ),
           appBar: _AppBar(
             title: _selectedIndex == 0
                 ? _appTitle
@@ -3258,14 +3303,11 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
                 ),
               ),
             ),
-            leading: IconButton(
-              tooltip: _copy.backToLanguages,
-              onPressed: () => Navigator.of(context).pushReplacement(
-                MaterialPageRoute<void>(
-                  builder: (_) => const LanguageSelectionPage(),
-                ),
+            onOpenMenu: () => _scaffoldKey.currentState?.openDrawer(),
+            onOpenLanguages: () => Navigator.of(context).pushReplacement(
+              MaterialPageRoute<void>(
+                builder: (_) => const LanguageSelectionPage(),
               ),
-              icon: const Icon(Icons.language_rounded),
             ),
           ),
           body: AnimatedSwitcher(
@@ -3315,6 +3357,296 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
       ),
     );
   }
+}
+
+class _FimMenuDrawer extends StatelessWidget {
+  const _FimMenuDrawer({
+    required this.language,
+    required this.onGovernment,
+    required this.onTickets,
+    required this.onExperienceMap,
+    required this.onTools,
+    required this.onGames,
+    required this.onLearn,
+    required this.onHelp,
+    required this.onCommunity,
+    required this.onManual,
+  });
+  final AppLanguage language;
+  final VoidCallback onGovernment;
+  final VoidCallback onTickets;
+  final VoidCallback onExperienceMap;
+  final VoidCallback onTools;
+  final VoidCallback onGames;
+  final VoidCallback onLearn;
+  final VoidCallback onHelp;
+  final VoidCallback onCommunity;
+  final VoidCallback onManual;
+
+  String get _title => language == AppLanguage.bangla ? 'FIM মেনু' : 'FIM menu';
+  String get _subtitle => language == AppLanguage.bangla
+      ? 'Malaysia-তে আপনার দরকারি সব সেবা এক জায়গায়'
+      : 'Your Malaysia utility space, organized in one place';
+
+  void _run(BuildContext context, VoidCallback action) {
+    Navigator.of(context).pop();
+    action();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final items = <_FimMenuItem>[
+      _FimMenuItem(
+        title: language == AppLanguage.bangla
+            ? 'সরকারি চেক'
+            : 'Government checks',
+        subtitle: 'Visa · FOMEMA · EPF',
+        icon: Icons.verified_outlined,
+        color: const Color(0xFF2C5AA0),
+        action: onGovernment,
+      ),
+      _FimMenuItem(
+        title: language == AppLanguage.bangla
+            ? 'টিকিট ও ইভেন্ট'
+            : 'Tickets & events',
+        subtitle: 'Movies · attractions · KL events',
+        icon: Icons.confirmation_number_outlined,
+        color: const Color(0xFFB74B3C),
+        action: onTickets,
+      ),
+      _FimMenuItem(
+        title: language == AppLanguage.bangla
+            ? 'অভিজ্ঞতার মানচিত্র'
+            : 'Experience map',
+        subtitle: 'Expat places, stays and warnings',
+        icon: Icons.map_outlined,
+        color: const Color(0xFF277A5D),
+        action: onExperienceMap,
+      ),
+      _FimMenuItem(
+        title: language == AppLanguage.bangla ? 'শেখা' : 'Learn',
+        subtitle: 'Malay phrases and words',
+        icon: Icons.menu_book_outlined,
+        color: const Color(0xFF8A6E2F),
+        action: onLearn,
+      ),
+      _FimMenuItem(
+        title: language == AppLanguage.bangla
+            ? 'সহায়তা ও তথ্য'
+            : 'Help & info',
+        subtitle: 'Guides, assistant and emergency help',
+        icon: Icons.support_agent_outlined,
+        color: const Color(0xFF7B4B9B),
+        action: onHelp,
+      ),
+      _FimMenuItem(
+        title: language == AppLanguage.bangla ? 'কমিউনিটি' : 'Community',
+        subtitle: 'Posts, reports and useful updates',
+        icon: Icons.forum_outlined,
+        color: const Color(0xFFB66B1C),
+        action: onCommunity,
+      ),
+      _FimMenuItem(
+        title: language == AppLanguage.bangla
+            ? 'ইউজার ম্যানুয়াল'
+            : 'User manual',
+        subtitle: 'Learn how to use FIM',
+        icon: Icons.play_circle_outline_rounded,
+        color: const Color(0xFF365E9D),
+        action: onManual,
+      ),
+      _FimMenuItem(
+        title: language == AppLanguage.bangla ? 'ডেইলি টুলস' : 'Daily tools',
+        subtitle: 'Translate · QR · rates · trips',
+        icon: Icons.build_circle_outlined,
+        color: const Color(0xFF365E9D),
+        action: onTools,
+      ),
+      _FimMenuItem(
+        title: language == AppLanguage.bangla ? 'গেমস' : 'Games',
+        subtitle: language == AppLanguage.bangla
+            ? 'শীঘ্রই আসছে'
+            : 'Coming soon',
+        icon: Icons.sports_esports_outlined,
+        color: const Color(0xFF8A4C99),
+        action: onGames,
+      ),
+    ];
+    return Drawer(
+      width: MediaQuery.sizeOf(context).width * .88,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppPalette.flagNavy, Color(0xFF124B9B)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Row(
+                children: [
+                  ClipOval(
+                    child: Image.asset(
+                      _workerLogoAsset,
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => const Icon(
+                        Icons.public,
+                        color: Colors.white,
+                        size: 42,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 23,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _subtitle,
+                          style: const TextStyle(
+                            color: Color(0xFFD7E5FF),
+                            fontSize: 11.5,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
+                children: [
+                  Text(
+                    language == AppLanguage.bangla
+                        ? 'আপনার শর্টকাট'
+                        : 'Your shortcuts',
+                    style: TextStyle(
+                      color: scheme.onSurface,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: items.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio: 1.55,
+                        ),
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return _FimMenuCard(
+                        item: item,
+                        onTap: () => _run(context, item.action),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 18),
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.settings_outlined),
+                      title: Text(
+                        language == AppLanguage.bangla
+                            ? 'সেটিংস ও প্রাইভেসি'
+                            : 'Settings & privacy',
+                      ),
+                      subtitle: Text(
+                        language == AppLanguage.bangla
+                            ? 'দেশ, ভাষা, theme ও নিরাপত্তা'
+                            : 'Country, language, theme and safety',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FimMenuItem {
+  const _FimMenuItem({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.action,
+  });
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final VoidCallback action;
+}
+
+class _FimMenuCard extends StatelessWidget {
+  const _FimMenuCard({required this.item, required this.onTap});
+  final _FimMenuItem item;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => Card(
+    margin: EdgeInsets.zero,
+    child: InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(item.icon, color: item.color, size: 27),
+            const SizedBox(height: 7),
+            Text(
+              item.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              item.subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface
+                    .withValues(alpha: .62),
+                fontSize: 9.5,
+                height: 1.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class _WorkerDashboardTab extends StatelessWidget {
@@ -4665,10 +4997,18 @@ class ServiceHomePage extends StatelessWidget {
 }
 
 class _AppBar extends StatelessWidget implements PreferredSizeWidget {
-  const _AppBar({required this.title, this.leading, this.onOpenManual});
+  const _AppBar({
+    required this.title,
+    this.leading,
+    this.onOpenManual,
+    this.onOpenMenu,
+    this.onOpenLanguages,
+  });
   final String title;
   final Widget? leading;
   final VoidCallback? onOpenManual;
+  final VoidCallback? onOpenMenu;
+  final VoidCallback? onOpenLanguages;
 
   @override
   Size get preferredSize => const Size.fromHeight(74);
@@ -4678,7 +5018,13 @@ class _AppBar extends StatelessWidget implements PreferredSizeWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final foreground = Theme.of(context).colorScheme.onSurface;
     return AppBar(
-      leading: leading,
+      leading: onOpenMenu != null
+          ? IconButton(
+              tooltip: 'Open FIM menu',
+              onPressed: onOpenMenu,
+              icon: Icon(Icons.menu_rounded, color: foreground),
+            )
+          : leading,
       titleSpacing: 12,
       title: Row(
         children: [
@@ -4718,6 +5064,12 @@ class _AppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
+        if (onOpenLanguages != null)
+          IconButton(
+            tooltip: 'Country and language',
+            onPressed: onOpenLanguages,
+            icon: Icon(Icons.language_rounded, color: foreground),
+          ),
         if (onOpenManual != null)
           IconButton(
             tooltip: 'User manual video',
