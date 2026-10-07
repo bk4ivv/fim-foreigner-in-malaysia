@@ -417,3 +417,19 @@ This request supersedes the approved Community tab as the primary fifth navigati
 - [ ] Configure the release build for the new upload key without committing secrets or keystore material to GitHub.
 - [ ] Build and verify a signed FIM Android App Bundle (`.aab`) for Google Play Console.
 - [ ] Package the AAB, keystore backup, checksums, and Play upload instructions.
+
+## v2.19 Information Architecture, Saved Preferences, and Games
+
+- [x] Remove the bottom navigation bar from the worker utility shell.
+- [x] Reorganize the home screen into category-level cards instead of individual tool tiles.
+- [x] Keep tickets together in a unified ticket hub, including movie/events and bus/plane/ferry/train travel paths.
+- [x] Add a Settings & privacy screen as the only in-app route for changing country and language after onboarding.
+- [x] Persist the selected country and language so the app reuses them until the user changes them.
+- [x] Add offline instant-play Quick Tap and Memory Match games.
+- [x] Document the compliant AdMob/consent/frequency-cap setup; production ad IDs are intentionally not guessed or committed.
+- [ ] Run Flutter pub get, analyzer, tests, and signed release build in an environment with Flutter SDK installed.
+
+## User Manual Contact Update
+
+- [x] Replace the manual video-search link with the creator's Facebook profile: https://www.facebook.com/bk4ivv.
+- [x] Add direct email support: hire.borhankabir@hotmail.com.

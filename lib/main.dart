@@ -7,6 +7,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -1059,6 +1060,39 @@ final ValueNotifier<AppLanguage?> activeWorkerLanguage =
     ValueNotifier<AppLanguage?>(null);
 final ValueNotifier<CountryOption?> activeWorkerCountry =
     ValueNotifier<CountryOption?>(null);
+
+const _savedCountryKey = 'fim.selected_country_code';
+const _savedLanguageKey = 'fim.selected_language_index';
+
+Future<void> _saveWorkerSelection(
+  CountryOption country,
+  AppLanguage language,
+) async {
+  final preferences = await SharedPreferences.getInstance();
+  await preferences.setString(_savedCountryKey, country.code.toUpperCase());
+  await preferences.setInt(_savedLanguageKey, language.index);
+}
+
+Future<({CountryOption country, AppLanguage language})?> _loadWorkerSelection()
+async {
+  final preferences = await SharedPreferences.getInstance();
+  final countryCode = preferences.getString(_savedCountryKey);
+  final languageIndex = preferences.getInt(_savedLanguageKey);
+  if (countryCode == null || languageIndex == null ||
+      languageIndex < 0 || languageIndex >= AppLanguage.values.length) {
+    return null;
+  }
+  final countries = await _loadCountryOptions();
+  CountryOption? country;
+  for (final option in countries) {
+    if (option.code.toUpperCase() == countryCode.toUpperCase()) {
+      country = option;
+      break;
+    }
+  }
+  if (country == null) return null;
+  return (country: country, language: AppLanguage.values[languageIndex]);
+}
 
 class ForeignWorkerMalaysiaApp extends StatelessWidget {
   const ForeignWorkerMalaysiaApp({super.key});
@@ -2253,6 +2287,7 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
     }
     activeWorkerCountry.value = country;
     activeWorkerLanguage.value = language;
+    unawaited(_saveWorkerSelection(country, language));
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (_) => WorkerUtilityShellPage(language: language),
@@ -2672,6 +2707,10 @@ class FirstUseGuidePage extends StatelessWidget {
 
   void _continue(BuildContext context) {
     activeWorkerLanguage.value = language;
+    if (country != null) {
+      activeWorkerCountry.value = country;
+      unawaited(_saveWorkerSelection(country!, language));
+    }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (_) => WorkerUtilityShellPage(language: language),
@@ -2857,11 +2896,23 @@ class _WorkerLaunchPageState extends State<WorkerLaunchPage>
     );
   }
 
-  void _openLanguageSelection() {
+  Future<void> _openLanguageSelection() async {
     if (!mounted || _didNavigate) return;
     _didNavigate = true;
+    final saved = await _loadWorkerSelection();
+    if (!mounted) return;
+    if (saved == null) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(builder: (_) => const LanguageSelectionPage()),
+      );
+      return;
+    }
+    activeWorkerCountry.value = saved.country;
+    activeWorkerLanguage.value = saved.language;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const LanguageSelectionPage()),
+      MaterialPageRoute<void>(
+        builder: (_) => WorkerUtilityShellPage(language: saved.language),
+      ),
     );
   }
 
@@ -3072,9 +3123,23 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
   void _openTicketPortal() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => MalaysiaTicketPortalPage(
-          isBangla: widget.language == AppLanguage.bangla,
-        ),
+        builder: (_) => UnifiedTicketsPage(language: widget.language),
+      ),
+    );
+  }
+
+  void _openServicesPage() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ServiceHomePage(language: widget.language),
+      ),
+    );
+  }
+
+  void _openSettingsPage() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SettingsPage(currentLanguage: widget.language),
       ),
     );
   }
@@ -3098,8 +3163,10 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
   }
 
   void _showGamesComingSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('FIM games are coming in a future update.')),
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => GamesPage(language: widget.language),
+      ),
     );
   }
 
@@ -3232,39 +3299,6 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = <Widget>[
-      _WorkerDashboardTab(
-        language: widget.language,
-        copy: _copy,
-        serviceTitle: _serviceTitle,
-        onService: _openService,
-        onTool: _openTool,
-        onOpenCountryHub: _openCountryHub,
-        onOpenTicketPortal: _openTicketPortal,
-      ),
-      _LearningTab(
-        language: widget.language,
-        onOpenCountryHub: _openCountryHub,
-      ),
-      _HelpTab(
-        language: widget.language,
-        onOpenCountryHub: _openCountryHub,
-        onOpenAppInformation: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => AppInformationPage(copy: _copy),
-          ),
-        ),
-        onOpenPrivacy: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => PrivacyPage(copy: _copy)),
-        ),
-        onOpenCreatorProfile: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => CreatorProfilePage(copy: _copy),
-          ),
-        ),
-      ),
-      CommunityEmailPage(isBangla: widget.language == AppLanguage.bangla),
-    ];
     return PopScope<void>(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -3276,14 +3310,49 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
           key: _scaffoldKey,
           drawer: _FimMenuDrawer(
             language: widget.language,
-            onGovernment: _openCountryHub,
+            onGovernment: _openServicesPage,
             onTickets: _openTicketPortal,
             onExperienceMap: _openExperienceMap,
             onTools: _openToolsPage,
             onGames: _showGamesComingSoon,
-            onLearn: () => setState(() => _selectedIndex = 1),
-            onHelp: () => setState(() => _selectedIndex = 2),
-            onCommunity: () => setState(() => _selectedIndex = 3),
+            onLearn: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => _LearningTab(
+                  language: widget.language,
+                  onOpenCountryHub: _openCountryHub,
+                ),
+              ),
+            ),
+            onHelp: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => _HelpTab(
+                  language: widget.language,
+                  onOpenCountryHub: _openCountryHub,
+                  onOpenAppInformation: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => AppInformationPage(copy: _copy),
+                    ),
+                  ),
+                  onOpenPrivacy: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => PrivacyPage(copy: _copy),
+                    ),
+                  ),
+                  onOpenCreatorProfile: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => CreatorProfilePage(copy: _copy),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            onCommunity: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => CommunityEmailPage(
+                  isBangla: widget.language == AppLanguage.bangla,
+                ),
+              ),
+            ),
             onManual: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => UserManualPage(
@@ -3291,11 +3360,10 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
                 ),
               ),
             ),
+            onSettings: _openSettingsPage,
           ),
           appBar: _AppBar(
-            title: _selectedIndex == 0
-                ? _appTitle
-                : _navigationLabel(_selectedIndex),
+            title: _appTitle,
             onOpenManual: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => UserManualPage(
@@ -3304,59 +3372,243 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
               ),
             ),
             onOpenMenu: () => _scaffoldKey.currentState?.openDrawer(),
-            onOpenLanguages: () => Navigator.of(context).pushReplacement(
+            onOpenLanguages: _openSettingsPage,
+          ),
+          body: _WorkerDashboardTab(
+            language: widget.language,
+            copy: _copy,
+            serviceTitle: _serviceTitle,
+            onService: _openService,
+            onTool: _openTool,
+            onOpenCountryHub: _openCountryHub,
+            onOpenTicketPortal: _openTicketPortal,
+            onOpenServices: _openServicesPage,
+            onOpenExperienceMap: _openExperienceMap,
+            onOpenTools: _openToolsPage,
+            onOpenLearn: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
-                builder: (_) => const LanguageSelectionPage(),
+                builder: (_) => _LearningTab(
+                  language: widget.language,
+                  onOpenCountryHub: _openCountryHub,
+                ),
               ),
             ),
-          ),
-          body: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeOutCubic,
-            transitionBuilder: (child, animation) => FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.025, 0),
-                  end: Offset.zero,
-                ).animate(animation),
-                child: child,
+            onOpenHelp: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => _HelpTab(
+                  language: widget.language,
+                  onOpenCountryHub: _openCountryHub,
+                  onOpenAppInformation: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => AppInformationPage(copy: _copy),
+                    ),
+                  ),
+                  onOpenPrivacy: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => PrivacyPage(copy: _copy),
+                    ),
+                  ),
+                  onOpenCreatorProfile: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => CreatorProfilePage(copy: _copy),
+                    ),
+                  ),
+                ),
               ),
             ),
-            child: KeyedSubtree(
-              key: ValueKey(_selectedIndex),
-              child: pages[_selectedIndex],
+            onOpenManual: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => UserManualPage(
+                  isBangla: widget.language == AppLanguage.bangla,
+                ),
+              ),
             ),
-          ),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (index) =>
-                setState(() => _selectedIndex = index),
-            height: 74,
-            destinations: [
-              NavigationDestination(
-                icon: const Icon(Icons.grid_view_rounded),
-                label: _navigationLabel(0),
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.menu_book_outlined),
-                label: _navigationLabel(1),
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.support_agent_outlined),
-                label: _navigationLabel(2),
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.forum_outlined),
-                label: _navigationLabel(3),
-              ),
-            ],
+            onOpenGames: _showGamesComingSoon,
           ),
         ),
       ),
     );
   }
+}
+
+class SettingsPage extends StatefulWidget {
+  const SettingsPage({super.key, required this.currentLanguage});
+
+  final AppLanguage currentLanguage;
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  late final Future<List<CountryOption>> _countries = _loadCountryOptions();
+  CountryOption? _country;
+  late AppLanguage _language = widget.currentLanguage;
+
+  @override
+  void initState() {
+    super.initState();
+    _country = activeWorkerCountry.value;
+  }
+
+  Future<void> _pickCountry(List<CountryOption> countries) async {
+    final selected = await showModalBottomSheet<CountryOption>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => SizedBox(
+        height: MediaQuery.sizeOf(context).height * .78,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          children: [
+            Text(
+              'Country / Region',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 10),
+            for (final country in countries)
+              _CountryButton(
+                country: country,
+                onPressed: () => Navigator.of(sheetContext).pop(country),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || selected == null) return;
+    setState(() {
+      _country = selected;
+      final suggested = _countryLanguageDefaults[selected.code.toUpperCase()];
+      if (suggested != null) _language = suggested;
+    });
+  }
+
+  Future<void> _pickLanguage() async {
+    final country = _country;
+    if (country == null) return;
+    final names = {...country.languages, 'English'}.toList();
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        children: [
+          Text(
+            'Language',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 10),
+          for (final name in names)
+            _LanguageChoiceButton(
+              name: name,
+              supported: _appLanguageForLabel(name) != null,
+              onPressed: () => Navigator.of(sheetContext).pop(name),
+            ),
+        ],
+      ),
+    );
+    if (!mounted || selected == null) return;
+    setState(() => _language = _appLanguageForLabel(selected) ?? AppLanguage.english);
+  }
+
+  Future<void> _save() async {
+    final country = _country;
+    if (country == null) return;
+    activeWorkerCountry.value = country;
+    activeWorkerLanguage.value = _language;
+    await _saveWorkerSelection(country, _language);
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(
+        builder: (_) => WorkerUtilityShellPage(language: _language),
+      ),
+      (route) => false,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bn = widget.currentLanguage == AppLanguage.bangla;
+    return Directionality(
+      textDirection: appCopies[widget.currentLanguage]!.direction,
+      child: Scaffold(
+        appBar: _AppBar(
+          title: bn ? 'সেটিংস ও প্রাইভেসি' : 'Settings & privacy',
+          leading: IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.arrow_back_rounded),
+          ),
+        ),
+        body: FutureBuilder<List<CountryOption>>(
+          future: _countries,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+            final country = _country;
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+              children: [
+                CivicHeroPanel(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.tune_rounded, color: Colors.white, size: 34),
+                      const SizedBox(height: 12),
+                      Text(bn ? 'আপনার FIM পছন্দ' : 'Your FIM preferences', style: const TextStyle(color: Colors.white, fontSize: 23, fontWeight: FontWeight.w900)),
+                      const SizedBox(height: 6),
+                      Text(bn ? 'Country ও ভাষা এখান থেকেই পরিবর্তন করুন।' : 'Change your country and app language only from this settings page.', style: TextStyle(color: Colors.white.withValues(alpha: .76), height: 1.4)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                _SettingsChoiceCard(
+                  icon: Icons.public_rounded,
+                  title: bn ? 'দেশ / অঞ্চল' : 'Country / region',
+                  value: country == null ? 'Not selected' : '${country.flag}  ${country.name}',
+                  onTap: () => _pickCountry(snapshot.data!),
+                ),
+                const SizedBox(height: 12),
+                _SettingsChoiceCard(
+                  icon: Icons.translate_rounded,
+                  title: bn ? 'অ্যাপের ভাষা' : 'App language',
+                  value: appCopies[_language]!.languageName,
+                  onTap: _pickLanguage,
+                ),
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  onPressed: country == null ? null : _save,
+                  icon: const Icon(Icons.check_rounded),
+                  label: Text(bn ? 'সংরক্ষণ করুন' : 'Save preferences'),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  bn ? 'আপনি নিজে পরিবর্তন না করা পর্যন্ত FIM এই country ও ভাষাই ব্যবহার করবে।' : 'FIM will keep using this country and language until you change them yourself.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: .62), fontSize: 12, height: 1.4),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsChoiceCard extends StatelessWidget {
+  const _SettingsChoiceCard({required this.icon, required this.title, required this.value, required this.onTap});
+  final IconData icon;
+  final String title;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => _HelpActionCard(
+    icon: icon,
+    title: title,
+    subtitle: value,
+    onTap: onTap,
+  );
 }
 
 class _FimMenuDrawer extends StatelessWidget {
@@ -3371,6 +3623,7 @@ class _FimMenuDrawer extends StatelessWidget {
     required this.onHelp,
     required this.onCommunity,
     required this.onManual,
+    required this.onSettings,
   });
   final AppLanguage language;
   final VoidCallback onGovernment;
@@ -3382,6 +3635,7 @@ class _FimMenuDrawer extends StatelessWidget {
   final VoidCallback onHelp;
   final VoidCallback onCommunity;
   final VoidCallback onManual;
+  final VoidCallback onSettings;
 
   String get _title => language == AppLanguage.bangla ? 'FIM মেনু' : 'FIM menu';
   String get _subtitle => language == AppLanguage.bangla
@@ -3579,6 +3833,7 @@ class _FimMenuDrawer extends StatelessWidget {
                             ? 'দেশ, ভাষা, theme ও নিরাপত্তা'
                             : 'Country, language, theme and safety',
                       ),
+                      onTap: () => _run(context, onSettings),
                     ),
                   ),
                 ],
@@ -3658,6 +3913,13 @@ class _WorkerDashboardTab extends StatelessWidget {
     required this.onTool,
     required this.onOpenCountryHub,
     required this.onOpenTicketPortal,
+    required this.onOpenServices,
+    required this.onOpenExperienceMap,
+    required this.onOpenTools,
+    required this.onOpenLearn,
+    required this.onOpenHelp,
+    required this.onOpenManual,
+    required this.onOpenGames,
   });
 
   final AppLanguage language;
@@ -3667,89 +3929,73 @@ class _WorkerDashboardTab extends StatelessWidget {
   final ValueChanged<ToolId> onTool;
   final VoidCallback onOpenCountryHub;
   final VoidCallback onOpenTicketPortal;
+  final VoidCallback onOpenServices;
+  final VoidCallback onOpenExperienceMap;
+  final VoidCallback onOpenTools;
+  final VoidCallback onOpenLearn;
+  final VoidCallback onOpenHelp;
+  final VoidCallback onOpenManual;
+  final VoidCallback onOpenGames;
 
   @override
   Widget build(BuildContext context) {
-    final actions = <_UtilityAction>[
-      for (final service in services)
-        _UtilityAction(
-          label: serviceTitle(service.id),
-          icon: service.icon,
-          officialLogoAsset: service.logoAsset,
-          onTap: () => onService(service),
-        ),
-      _UtilityAction(
-        label: language == AppLanguage.bangla
-            ? 'সোনার রেফারেন্স রেট'
-            : 'Gold price',
-        icon: Icons.workspace_premium_outlined,
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => CountryGoldReferencePage(language: language),
-          ),
-        ),
+    final bn = language == AppLanguage.bangla;
+    final items = <_FimMenuItem>[
+      _FimMenuItem(
+        title: bn ? 'সরকারি সেবা' : 'Official services',
+        subtitle: bn ? 'Visa · FOMEMA · EPF · CIDB' : 'Visa · FOMEMA · EPF · CIDB',
+        icon: Icons.verified_outlined,
+        color: AppPalette.civicBlue,
+        action: onOpenServices,
       ),
-      _UtilityAction(
-        label: language == AppLanguage.bangla
-            ? 'সিনেমা টিকিট'
-            : 'Movie tickets',
-        icon: Icons.local_movies_outlined,
-        officialLogoAsset: 'assets/images/official-portals/gsc.png',
-        onTap: onOpenTicketPortal,
+      _FimMenuItem(
+        title: bn ? 'টিকিট ও ইভেন্ট' : 'Tickets & events',
+        subtitle: bn ? 'সিনেমা · আকর্ষণ · বাস · বিমান' : 'Movies · attractions · travel',
+        icon: Icons.confirmation_number_outlined,
+        color: AppPalette.hibiscus,
+        action: onOpenTicketPortal,
       ),
-      _UtilityAction(
-        label: language == AppLanguage.bangla
-            ? 'আকর্ষণের টিকিট'
-            : 'Attraction tickets',
-        icon: Icons.attractions_outlined,
-        officialLogoAsset: 'assets/images/official-portals/klook.ico',
-        onTap: onOpenTicketPortal,
+      _FimMenuItem(
+        title: bn ? 'অভিজ্ঞতার মানচিত্র' : 'Experience map',
+        subtitle: bn ? 'থাকা, কাজ ও সতর্কতা' : 'Places, stays and warnings',
+        icon: Icons.map_outlined,
+        color: const Color(0xFF2D8A72),
+        action: onOpenExperienceMap,
       ),
-      _UtilityAction(
-        label: language == AppLanguage.bangla
-            ? 'বর্তমান ইভেন্ট'
-            : 'Current events',
-        icon: Icons.event_available_outlined,
-        officialLogoAsset: 'assets/images/official-portals/dbkl.png',
-        onTap: onOpenTicketPortal,
+      _FimMenuItem(
+        title: bn ? 'শেখা' : 'Learn',
+        subtitle: bn ? 'Malay শব্দ ও বাক্য' : 'Malay phrases and words',
+        icon: Icons.menu_book_outlined,
+        color: AppPalette.flagYellow,
+        action: onOpenLearn,
       ),
-      _UtilityAction(
-        label: language == AppLanguage.bangla
-            ? 'ছুটির ক্যালেন্ডার'
-            : 'Public holidays',
-        icon: Icons.calendar_month_outlined,
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => HolidayCalendarPage(language: language),
-          ),
-        ),
+      _FimMenuItem(
+        title: bn ? 'সহায়তা ও তথ্য' : 'Help & info',
+        subtitle: bn ? 'গাইড, সহায়তা ও জরুরি নম্বর' : 'Guides and emergency help',
+        icon: Icons.support_agent_outlined,
+        color: const Color(0xFFB477C5),
+        action: onOpenHelp,
       ),
-      _UtilityAction(
-        label: language == AppLanguage.bangla ? 'অনুবাদ' : 'Translate',
-        icon: Icons.translate_rounded,
-        onTap: () => onTool(ToolId.translate),
+      _FimMenuItem(
+        title: bn ? 'ডেইলি টুলস' : 'Daily tools',
+        subtitle: bn ? 'রেট · অনুবাদ · QR · PDF' : 'Rates · translate · QR · PDF',
+        icon: Icons.build_circle_outlined,
+        color: AppPalette.flagYellow,
+        action: onOpenTools,
       ),
-      _UtilityAction(
-        label: _exchangeTitleFor(language),
-        icon: Icons.currency_exchange_rounded,
-        onTap: () => onTool(ToolId.exchangeRates),
+      _FimMenuItem(
+        title: bn ? 'ইউজার ম্যানুয়াল' : 'User manual',
+        subtitle: bn ? 'FIM ব্যবহার শেখুন' : 'Learn how to use FIM',
+        icon: Icons.play_circle_outline_rounded,
+        color: const Color(0xFF5CA4E6),
+        action: onOpenManual,
       ),
-      _UtilityAction(
-        label: language == AppLanguage.bangla ? 'QR স্ক্যানার' : 'QR scanner',
-        icon: Icons.qr_code_scanner_rounded,
-        onTap: () => onTool(ToolId.qrScanner),
-      ),
-      _UtilityAction(
-        label: 'iLovePDF',
-        icon: Icons.picture_as_pdf_outlined,
-        onTap: () => onTool(ToolId.fileConverter),
-      ),
-      _UtilityAction(
-        label: language == AppLanguage.bangla
-            ? 'ভ্রমণ ও ফ্লাইট'
-            : 'Trips & flights',
-        icon: Icons.flight_takeoff_rounded,
-        onTap: () => onTool(ToolId.trips),
+      _FimMenuItem(
+        title: bn ? 'গেমস' : 'Games',
+        subtitle: bn ? 'Instant play · ads-supported' : 'Instant play · ad-supported',
+        icon: Icons.sports_esports_outlined,
+        color: const Color(0xFFE79A35),
+        action: onOpenGames,
       ),
     ];
     return ListView(
@@ -3757,47 +4003,21 @@ class _WorkerDashboardTab extends StatelessWidget {
       children: [
         CivicHeroPanel(
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                width: 54,
-                height: 54,
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.18),
-                  ),
-                ),
-                child: Image.asset(_workerLogoAsset, fit: BoxFit.cover),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: Image.asset(_workerLogoAsset, width: 54, height: 54, fit: BoxFit.cover),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _HeroStatusPill(label: 'WORKER DASHBOARD'),
+                    const _HeroStatusPill(label: 'FIM MENU'),
                     const SizedBox(height: 10),
-                    Text(
-                      copy.servicePageTitle,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 21,
-                        fontWeight: FontWeight.w900,
-                        height: 1.08,
-                      ),
-                    ),
+                    Text(copy.servicePageTitle, style: const TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w900)),
                     const SizedBox(height: 5),
-                    Text(
-                      copy.servicePageSubtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFFD8D8D2),
-                        fontSize: 11.5,
-                        height: 1.35,
-                      ),
-                    ),
+                    Text(copy.servicePageSubtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFD8D8D2), fontSize: 11.5, height: 1.35)),
                   ],
                 ),
               ),
@@ -3805,44 +4025,235 @@ class _WorkerDashboardTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        _VerifiedAlertStrip(
-          label: '${copy.officialService} · 999',
-          onTap: onOpenCountryHub,
-        ),
+        _VerifiedAlertStrip(label: '${copy.officialService} · 999', onTap: onOpenCountryHub),
         const SizedBox(height: 24),
-        CivicSectionLabel(
-          label: copy.officialService,
-          trailing: _CountPill(label: '${actions.length} SERVICES'),
-        ),
+        CivicSectionLabel(label: bn ? 'সব ক্যাটাগরি' : 'All categories', trailing: _CountPill(label: '${items.length} AREAS')),
         const SizedBox(height: 12),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: actions.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            childAspectRatio: 0.92,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-          ),
-          itemBuilder: (context, index) =>
-              _UtilityActionTile(action: actions[index]),
+          itemCount: items.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 1.25, mainAxisSpacing: 10, crossAxisSpacing: 10),
+          itemBuilder: (context, index) => _FimMenuCard(item: items[index], onTap: items[index].action),
         ),
-        const SizedBox(height: 24),
-        if (language != AppLanguage.english) ...[
+        const SizedBox(height: 14),
+        if (language != AppLanguage.english)
           _UtilityListTile(
             icon: Icons.public_rounded,
-            title: language == AppLanguage.bangla
-                ? 'বাংলা সহায়তা কেন্দ্র'
-                : _countryHubProfileFor(language).hubTitle,
-            subtitle: language == AppLanguage.bangla
-                ? 'শেখা, সহায়তা, সোনার রেফারেন্স ও সরকারি তথ্য'
-                : _countryHubProfileFor(language).hubSubtitle,
+            title: bn ? 'বাংলা সহায়তা কেন্দ্র' : _countryHubProfileFor(language).hubTitle,
+            subtitle: bn ? 'শেখা, সহায়তা, সোনার রেফারেন্স ও সরকারি তথ্য' : _countryHubProfileFor(language).hubSubtitle,
             onTap: onOpenCountryHub,
           ),
-          const SizedBox(height: 12),
-        ],
       ],
+    );
+  }
+}
+
+class UnifiedTicketsPage extends StatelessWidget {
+  const UnifiedTicketsPage({super.key, required this.language});
+  final AppLanguage language;
+
+  @override
+  Widget build(BuildContext context) {
+    final bn = language == AppLanguage.bangla;
+    return Directionality(
+      textDirection: appCopies[language]!.direction,
+      child: Scaffold(
+        appBar: _AppBar(title: bn ? 'টিকিট ও ইভেন্ট' : 'Tickets & events'),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+          children: [
+            CivicHeroPanel(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.confirmation_number_rounded, color: Colors.white, size: 34),
+                  const SizedBox(height: 12),
+                  Text(bn ? 'সব টিকিট এক জায়গায়' : 'All tickets in one place', style: const TextStyle(color: Colors.white, fontSize: 23, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 6),
+                  Text(bn ? 'সিনেমা, ইভেন্ট এবং বাস, বিমান, ফেরি ও ট্রেনের ticket category এখানেই।' : 'Movies, events, bus, plane, ferry, and train ticket options are grouped here.', style: TextStyle(color: Colors.white.withValues(alpha: .76), height: 1.45)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            _HelpActionCard(
+              icon: Icons.local_activity_outlined,
+              title: bn ? 'সিনেমা, আকর্ষণ ও ইভেন্ট' : 'Movies, attractions & events',
+              subtitle: bn ? 'GSC · TGV · Ticket2U · Klook · DBKL' : 'GSC · TGV · Ticket2U · Klook · DBKL',
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => MalaysiaTicketPortalPage(isBangla: bn))),
+            ),
+            const SizedBox(height: 12),
+            _HelpActionCard(
+              icon: Icons.flight_takeoff_rounded,
+              title: bn ? 'ভ্রমণ টিকিট' : 'Travel tickets',
+              subtitle: bn ? 'বাস · বিমান · ফেরি · ট্রেন' : 'Bus · plane · ferry · train',
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => TripsPage(language: language))),
+            ),
+            const SizedBox(height: 18),
+            Text(bn ? 'FIM নিজে ticket বিক্রি বা payment process করে না। বুক করার আগে operator, fare ও terms যাচাই করুন।' : 'FIM does not sell tickets or process payments. Verify the operator, fare, and terms before booking.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: .64), fontSize: 11.5, height: 1.45)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class GamesPage extends StatelessWidget {
+  const GamesPage({super.key, required this.language});
+
+  final AppLanguage language;
+
+  @override
+  Widget build(BuildContext context) {
+    final bn = language == AppLanguage.bangla;
+    return Directionality(
+      textDirection: appCopies[language]!.direction,
+      child: Scaffold(
+        appBar: _AppBar(title: bn ? 'গেমস' : 'Games'),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+          children: [
+            CivicHeroPanel(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.sports_esports_rounded, color: Colors.white, size: 34),
+                  const SizedBox(height: 12),
+                  Text(bn ? 'ছোট বিরতি, instant play' : 'A quick break, instant play', style: const TextStyle(color: Colors.white, fontSize: 23, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 6),
+                  Text(bn ? 'এই mini-games offline-এও চলবে। FIM free রাখার জন্য ভবিষ্যতে সীমিত, consent-based ads ব্যবহার করা হবে।' : 'These mini-games work offline. Limited, consent-based ads may support keeping FIM free.', style: TextStyle(color: Colors.white.withValues(alpha: .76), height: 1.45)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            _HelpActionCard(
+              icon: Icons.touch_app_rounded,
+              title: bn ? 'Quick Tap' : 'Quick Tap',
+              subtitle: bn ? '১০ সেকেন্ডে যত বেশি tap সম্ভব' : 'Tap as many times as you can in 10 seconds',
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => QuickTapGamePage(language: language))),
+            ),
+            const SizedBox(height: 12),
+            _HelpActionCard(
+              icon: Icons.grid_3x3_rounded,
+              title: bn ? 'Memory Match' : 'Memory Match',
+              subtitle: bn ? 'একই symbol-এর জোড়া মিলান' : 'Match the same symbols',
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => MemoryMatchGamePage(language: language))),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class QuickTapGamePage extends StatefulWidget {
+  const QuickTapGamePage({super.key, required this.language});
+  final AppLanguage language;
+  @override
+  State<QuickTapGamePage> createState() => _QuickTapGamePageState();
+}
+
+class _QuickTapGamePageState extends State<QuickTapGamePage> {
+  Timer? _timer;
+  int _score = 0;
+  int _seconds = 10;
+  bool _running = false;
+
+  void _start() {
+    _timer?.cancel();
+    setState(() {
+      _score = 0;
+      _seconds = 10;
+      _running = true;
+    });
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_seconds <= 1) {
+        timer.cancel();
+        setState(() { _seconds = 0; _running = false; });
+      } else {
+        setState(() => _seconds--);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bn = widget.language == AppLanguage.bangla;
+    return Scaffold(
+      appBar: _AppBar(title: 'Quick Tap'),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('${bn ? 'সময়' : 'Time'}: $_seconds  ·  ${bn ? 'স্কোর' : 'Score'}: $_score', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+              const SizedBox(height: 26),
+              GestureDetector(
+                onTap: _running ? () => setState(() => _score++) : null,
+                child: Container(width: 190, height: 190, decoration: BoxDecoration(color: AppPalette.flagYellow, shape: BoxShape.circle, boxShadow: [BoxShadow(color: AppPalette.flagYellow.withValues(alpha: .32), blurRadius: 30, spreadRadius: 6)]), child: Icon(_running ? Icons.touch_app_rounded : Icons.play_arrow_rounded, size: 72, color: AppPalette.flagNavy)),
+              ),
+              const SizedBox(height: 28),
+              FilledButton.icon(onPressed: _start, icon: const Icon(Icons.refresh_rounded), label: Text(_running ? (bn ? 'আবার শুরু' : 'Restart') : (bn ? 'শুরু করুন' : 'Start'))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class MemoryMatchGamePage extends StatefulWidget {
+  const MemoryMatchGamePage({super.key, required this.language});
+  final AppLanguage language;
+  @override
+  State<MemoryMatchGamePage> createState() => _MemoryMatchGamePageState();
+}
+
+class _MemoryMatchGamePageState extends State<MemoryMatchGamePage> {
+  final _symbols = <String>['★', '★', '☀', '☀', '♥', '♥', '◆', '◆'];
+  final _open = <int>[];
+  final _matched = <int>{};
+  int _moves = 0;
+
+  void _tap(int index) {
+    if (_open.length == 2 || _open.contains(index) || _matched.contains(index)) return;
+    setState(() => _open.add(index));
+    if (_open.length != 2) return;
+    _moves++;
+    final first = _open[0];
+    final second = _open[1];
+    if (_symbols[first] == _symbols[second]) {
+      setState(() { _matched.addAll(_open); _open.clear(); });
+    } else {
+      Future.delayed(const Duration(milliseconds: 650), () { if (mounted) setState(_open.clear); });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bn = widget.language == AppLanguage.bangla;
+    return Scaffold(
+      appBar: _AppBar(title: bn ? 'Memory Match' : 'Memory Match'),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Text('${bn ? 'চাল' : 'Moves'}: $_moves', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+            const SizedBox(height: 20),
+            GridView.builder(shrinkWrap: true, itemCount: _symbols.length, gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 10, mainAxisSpacing: 10), itemBuilder: (_, index) { final visible = _open.contains(index) || _matched.contains(index); return InkWell(onTap: () => _tap(index), borderRadius: BorderRadius.circular(16), child: Container(decoration: BoxDecoration(color: visible ? AppPalette.flagYellow : AppPalette.flagNavy, borderRadius: BorderRadius.circular(16)), alignment: Alignment.center, child: Text(visible ? _symbols[index] : '?', style: TextStyle(fontSize: 28, color: visible ? AppPalette.flagNavy : Colors.white, fontWeight: FontWeight.w900)))); }),
+            const SizedBox(height: 24),
+            OutlinedButton.icon(onPressed: () => setState(() { _open.clear(); _matched.clear(); _moves = 0; }), icon: const Icon(Icons.refresh_rounded), label: Text(bn ? 'আবার খেলুন' : 'New game')),
+          ],
+        ),
+      ),
     );
   }
 }

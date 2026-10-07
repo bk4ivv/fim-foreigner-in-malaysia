@@ -6,11 +6,9 @@ class UserManualPage extends StatelessWidget {
 
   final bool isBangla;
 
-  Future<void> _openVideoSearch(BuildContext context) async {
+  Future<void> _openFacebook(BuildContext context) async {
     final opened = await launchUrl(
-      Uri.parse(
-        'https://www.youtube.com/results?search_query=FIM+Foreigner+in+Malaysia+user+manual',
-      ),
+      Uri.parse('https://www.facebook.com/bk4ivv'),
       mode: LaunchMode.externalApplication,
     );
     if (!opened && context.mounted) {
@@ -18,8 +16,31 @@ class UserManualPage extends StatelessWidget {
         SnackBar(
           content: Text(
             isBangla
-                ? 'ভিডিও সাইট খোলা যায়নি।'
-                : 'The video site could not be opened.',
+                ? 'Facebook profile খোলা যায়নি।'
+                : 'The Facebook profile could not be opened.',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _openEmail(BuildContext context) async {
+    final opened = await launchUrl(
+      Uri(
+        scheme: 'mailto',
+        path: 'hire.borhankabir@hotmail.com',
+        queryParameters: {
+          'subject': 'FIM user manual help',
+        },
+      ),
+    );
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isBangla
+                ? 'Email app খোলা যায়নি।'
+                : 'The email app could not be opened.',
           ),
         ),
       );
@@ -174,16 +195,30 @@ class UserManualPage extends StatelessWidget {
           ],
           const SizedBox(height: 8),
           OutlinedButton.icon(
-            onPressed: () => _openVideoSearch(context),
-            icon: const Icon(Icons.play_circle_outline_rounded),
+            onPressed: () => _openFacebook(context),
+            icon: const Icon(Icons.facebook_rounded),
             label: Text(
               isBangla
-                  ? 'ব্যবহার নির্দেশিকা ভিডিও দেখুন'
-                  : 'Watch the user manual video',
+                  ? 'Facebook-এ User Manual দেখুন'
+                  : 'Open the User Manual on Facebook',
             ),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 15),
             ),
+          ),
+          const SizedBox(height: 10),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const CircleAvatar(
+              child: Icon(Icons.email_outlined),
+            ),
+            title: Text(
+              isBangla ? 'সরাসরি email করুন' : 'Contact me directly by email',
+              style: const TextStyle(fontWeight: FontWeight.w900),
+            ),
+            subtitle: const Text('hire.borhankabir@hotmail.com'),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => _openEmail(context),
           ),
         ],
       ),
