@@ -433,3 +433,11 @@ This request supersedes the approved Community tab as the primary fifth navigati
 
 - [x] Replace the manual video-search link with the creator's Facebook profile: https://www.facebook.com/bk4ivv.
 - [x] Add direct email support: hire.borhankabir@hotmail.com.
+
+## Localized Offline Money Manager
+
+- [x] Add Money Manager to the home category grid and FIM menu.
+- [x] Add device-local income and expense storage using SharedPreferences.
+- [x] Add selected-country currency display, monthly navigation, balance, income/expense summary, categories, notes, date selection, delete confirmation, and empty state.
+- [x] Add Bangla, Malay, Hindi, Urdu, and English core Money Manager labels.
+- [x] Keep personal finance data off the server by default.
