@@ -15,6 +15,7 @@ import 'community_email_page.dart';
 import 'expat_experience_map.dart';
 import 'fim_help_assistant.dart';
 import 'malaysia_ticket_portal.dart';
+import 'money_manager_page.dart';
 import 'user_manual_page.dart';
 
 const _appTitle = 'FIM - Foreigner in Malaysia';
@@ -3144,6 +3145,17 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
     );
   }
 
+  void _openMoneyManager() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => MoneyManagerPage(
+          languageName: _copy.languageName,
+          currencyCode: activeWorkerCountry.value?.currencyCode ?? 'MYR',
+        ),
+      ),
+    );
+  }
+
   void _openExperienceMap() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -3314,6 +3326,7 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
             onTickets: _openTicketPortal,
             onExperienceMap: _openExperienceMap,
             onTools: _openToolsPage,
+            onMoneyManager: _openMoneyManager,
             onGames: _showGamesComingSoon,
             onLearn: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
@@ -3385,6 +3398,7 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
             onOpenServices: _openServicesPage,
             onOpenExperienceMap: _openExperienceMap,
             onOpenTools: _openToolsPage,
+            onOpenMoneyManager: _openMoneyManager,
             onOpenLearn: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => _LearningTab(
@@ -3618,6 +3632,7 @@ class _FimMenuDrawer extends StatelessWidget {
     required this.onTickets,
     required this.onExperienceMap,
     required this.onTools,
+    required this.onMoneyManager,
     required this.onGames,
     required this.onLearn,
     required this.onHelp,
@@ -3630,6 +3645,7 @@ class _FimMenuDrawer extends StatelessWidget {
   final VoidCallback onTickets;
   final VoidCallback onExperienceMap;
   final VoidCallback onTools;
+  final VoidCallback onMoneyManager;
   final VoidCallback onGames;
   final VoidCallback onLearn;
   final VoidCallback onHelp;
@@ -3716,6 +3732,15 @@ class _FimMenuDrawer extends StatelessWidget {
         icon: Icons.build_circle_outlined,
         color: const Color(0xFF365E9D),
         action: onTools,
+      ),
+      _FimMenuItem(
+        title: language == AppLanguage.bangla ? 'মানি ম্যানেজার' : 'Money Manager',
+        subtitle: language == AppLanguage.bangla
+            ? 'আয় · খরচ · বাজেট · মাসিক সারাংশ'
+            : 'Income · expenses · budget · monthly summary',
+        icon: Icons.account_balance_wallet_outlined,
+        color: const Color(0xFF4E9F78),
+        action: onMoneyManager,
       ),
       _FimMenuItem(
         title: language == AppLanguage.bangla ? 'গেমস' : 'Games',
@@ -3916,6 +3941,7 @@ class _WorkerDashboardTab extends StatelessWidget {
     required this.onOpenServices,
     required this.onOpenExperienceMap,
     required this.onOpenTools,
+    required this.onOpenMoneyManager,
     required this.onOpenLearn,
     required this.onOpenHelp,
     required this.onOpenManual,
@@ -3932,6 +3958,7 @@ class _WorkerDashboardTab extends StatelessWidget {
   final VoidCallback onOpenServices;
   final VoidCallback onOpenExperienceMap;
   final VoidCallback onOpenTools;
+  final VoidCallback onOpenMoneyManager;
   final VoidCallback onOpenLearn;
   final VoidCallback onOpenHelp;
   final VoidCallback onOpenManual;
@@ -3982,6 +4009,13 @@ class _WorkerDashboardTab extends StatelessWidget {
         icon: Icons.build_circle_outlined,
         color: AppPalette.flagYellow,
         action: onOpenTools,
+      ),
+      _FimMenuItem(
+        title: bn ? 'মানি ম্যানেজার' : 'Money Manager',
+        subtitle: bn ? 'আয় · খরচ · বাজেট · সারাংশ' : 'Income · expenses · budget · summary',
+        icon: Icons.account_balance_wallet_outlined,
+        color: const Color(0xFF4E9F78),
+        action: onOpenMoneyManager,
       ),
       _FimMenuItem(
         title: bn ? 'ইউজার ম্যানুয়াল' : 'User manual',
