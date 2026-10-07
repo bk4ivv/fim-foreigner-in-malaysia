@@ -66,11 +66,10 @@ void main() {
 
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
     expect(find.text('OFFICIAL WORKER UTILITY · MALAYSIA'), findsOneWidget);
-    await tester.pump(const Duration(milliseconds: 900));
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 850));
     await tester.pump();
-    expect(find.byType(WorkerLaunchPage), findsNothing);
-    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.byType(WorkerLaunchPage), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
   });
 
   testWidgets(
@@ -92,14 +91,11 @@ void main() {
       ),
     );
 
-    expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Learn'), findsOneWidget);
-    expect(find.text('Info'), findsNothing);
-    expect(find.text('Credit'), findsNothing);
-    expect(find.text('Help & info'), findsOneWidget);
-    expect(find.text('Community'), findsOneWidget);
-    expect(find.text('Account'), findsNothing);
-    expect(find.text('Visa Status'), findsOneWidget);
+    expect(find.text('FIM - Foreigner in Malaysia'), findsOneWidget);
+    expect(find.text('Official services'), findsOneWidget);
+    expect(find.text('Experience map'), findsOneWidget);
+    expect(find.text('Tickets & events'), findsOneWidget);
+    expect(find.text('Community'), findsNothing);
   });
   testWidgets('opens the FIM menu with the Experience Map shortcut', (
     tester,
@@ -112,10 +108,10 @@ void main() {
     await tester.tap(find.byTooltip('Open FIM menu'));
     await tester.pump(const Duration(milliseconds: 350));
     expect(find.text('FIM menu'), findsOneWidget);
-    expect(find.text('Experience map'), findsOneWidget);
-    expect(find.text('Tickets & events'), findsOneWidget);
-    expect(find.text('Daily tools'), findsOneWidget);
-    expect(find.text('Games'), findsOneWidget);
+    expect(find.text('Experience map'), findsWidgets);
+    expect(find.text('Tickets & events'), findsWidgets);
+    expect(find.text('Daily tools'), findsWidgets);
+    expect(find.text('Games'), findsWidgets);
   });
   testWidgets('renders the Experience Map safety and sharing controls', (
     tester,

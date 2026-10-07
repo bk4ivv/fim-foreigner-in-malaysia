@@ -19,7 +19,10 @@ class MoneyManagerPage extends StatefulWidget {
 
 class _MoneyManagerPageState extends State<MoneyManagerPage> {
   static const _storageKey = 'fim.money_manager.transactions.v1';
+  static const _accountsStorageKey = 'fim.money_manager.accounts.v1';
   List<MoneyTransaction> _transactions = [];
+  List<MoneyAccount> _accounts = [];
+  String _selectedAccountId = 'personal';
   bool _loading = true;
   DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
 
@@ -34,8 +37,34 @@ class _MoneyManagerPageState extends State<MoneyManagerPage> {
   Future<void> _loadTransactions() async {
     final preferences = await SharedPreferences.getInstance();
     final raw = preferences.getString(_storageKey);
+    final rawAccounts = preferences.getString(_accountsStorageKey);
+    final accounts = rawAccounts == null
+        ? [
+            MoneyAccount(
+              id: 'personal',
+              name: 'Personal',
+              currencyCode: widget.currencyCode,
+            ),
+          ]
+        : (jsonDecode(rawAccounts) as List<dynamic>)
+              .map(
+                (item) => MoneyAccount.fromJson(item as Map<String, dynamic>),
+              )
+              .toList();
     if (!mounted) return;
     setState(() {
+      _accounts = accounts.isEmpty
+          ? [
+              MoneyAccount(
+                id: 'personal',
+                name: 'Personal',
+                currencyCode: widget.currencyCode,
+              ),
+            ]
+          : accounts;
+      if (!_accounts.any((account) => account.id == _selectedAccountId)) {
+        _selectedAccountId = _accounts.first.id;
+      }
       _transactions = raw == null
           ? []
           : (jsonDecode(raw) as List<dynamic>)
@@ -54,12 +83,26 @@ class _MoneyManagerPageState extends State<MoneyManagerPage> {
       _storageKey,
       jsonEncode(_transactions.map((item) => item.toJson()).toList()),
     );
+    await preferences.setString(
+      _accountsStorageKey,
+      jsonEncode(_accounts.map((item) => item.toJson()).toList()),
+    );
   }
+
+  MoneyAccount get _selectedAccount => _accounts.firstWhere(
+    (account) => account.id == _selectedAccountId,
+    orElse: () => MoneyAccount(
+      id: 'personal',
+      name: 'Personal',
+      currencyCode: widget.currencyCode,
+    ),
+  );
 
   List<MoneyTransaction> get _monthTransactions =>
       _transactions
           .where(
             (item) =>
+                item.accountId == _selectedAccountId &&
                 item.date.year == _selectedMonth.year &&
                 item.date.month == _selectedMonth.month,
           )
@@ -75,7 +118,7 @@ class _MoneyManagerPageState extends State<MoneyManagerPage> {
       .fold(0, (sum, item) => sum + item.amountCents);
 
   String _money(int cents) =>
-      '${widget.currencyCode} ${(cents / 100).toStringAsFixed(2)}';
+      '${_selectedAccount.currencyCode} ${(cents / 100).toStringAsFixed(2)}';
 
   String _date(DateTime date) =>
       '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
@@ -85,11 +128,79 @@ class _MoneyManagerPageState extends State<MoneyManagerPage> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) =>
-          _TransactionForm(copy: _copy, currencyCode: widget.currencyCode),
+      builder: (_) => _TransactionForm(
+        copy: _copy,
+        currencyCode: _selectedAccount.currencyCode,
+      ),
     );
     if (!mounted || result == null) return;
-    setState(() => _transactions = [..._transactions, result]);
+    setState(
+      () => _transactions = [
+        ..._transactions,
+        result.copyWith(accountId: _selectedAccountId),
+      ],
+    );
+    await _persist();
+  }
+
+  Future<void> _addAccount() async {
+    final account = await showDialog<MoneyAccount>(
+      context: context,
+      builder: (dialogContext) {
+        final nameController = TextEditingController();
+        final currencyController = TextEditingController(
+          text: widget.currencyCode,
+        );
+        return AlertDialog(
+          title: const Text('Add account'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Account name'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: currencyController,
+                textCapitalization: TextCapitalization.characters,
+                decoration: const InputDecoration(
+                  labelText: 'Currency code',
+                  hintText: 'MYR, USD, BDT, EUR',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final name = nameController.text.trim();
+                final code = currencyController.text.trim().toUpperCase();
+                if (name.isEmpty || code.length < 3) return;
+                Navigator.pop(
+                  dialogContext,
+                  MoneyAccount(
+                    id: DateTime.now().microsecondsSinceEpoch.toString(),
+                    name: name,
+                    currencyCode: code,
+                  ),
+                );
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+    if (!mounted || account == null) return;
+    setState(() {
+      _accounts = [..._accounts, account];
+      _selectedAccountId = account.id;
+    });
     await _persist();
   }
 
@@ -153,9 +264,47 @@ class _MoneyManagerPageState extends State<MoneyManagerPage> {
                 _BalanceCard(
                   copy: _copy,
                   balance: _money(balance),
-                  currencyCode: widget.currencyCode,
+                  currencyCode: _selectedAccount.currencyCode,
                 ),
                 const SizedBox(height: 16),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.account_balance_wallet_outlined),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: _selectedAccountId,
+                              items: [
+                                for (final account in _accounts)
+                                  DropdownMenuItem(
+                                    value: account.id,
+                                    child: Text(
+                                      '${account.name} · ${account.currencyCode}',
+                                    ),
+                                  ),
+                              ],
+                              onChanged: (value) {
+                                if (value == null) return;
+                                setState(() => _selectedAccountId = value);
+                              },
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _addAccount,
+                          tooltip: 'Add account',
+                          icon: const Icon(Icons.add_circle_outline_rounded),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     IconButton(
@@ -258,6 +407,7 @@ class MoneyTransaction {
     required this.category,
     required this.date,
     this.note = '',
+    this.accountId = 'personal',
   });
   final String id;
   final String title;
@@ -266,6 +416,18 @@ class MoneyTransaction {
   final String category;
   final DateTime date;
   final String note;
+  final String accountId;
+
+  MoneyTransaction copyWith({String? accountId}) => MoneyTransaction(
+    id: id,
+    title: title,
+    amountCents: amountCents,
+    type: type,
+    category: category,
+    date: date,
+    note: note,
+    accountId: accountId ?? this.accountId,
+  );
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -275,6 +437,7 @@ class MoneyTransaction {
     'category': category,
     'date': date.toIso8601String(),
     'note': note,
+    'accountId': accountId,
   };
 
   factory MoneyTransaction.fromJson(Map<String, dynamic> json) =>
@@ -286,7 +449,32 @@ class MoneyTransaction {
         category: json['category'] as String,
         date: DateTime.parse(json['date'] as String),
         note: (json['note'] as String?) ?? '',
+        accountId: (json['accountId'] as String?) ?? 'personal',
       );
+}
+
+class MoneyAccount {
+  const MoneyAccount({
+    required this.id,
+    required this.name,
+    required this.currencyCode,
+  });
+
+  final String id;
+  final String name;
+  final String currencyCode;
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'currencyCode': currencyCode,
+  };
+
+  factory MoneyAccount.fromJson(Map<String, dynamic> json) => MoneyAccount(
+    id: json['id'] as String,
+    name: json['name'] as String,
+    currencyCode: (json['currencyCode'] as String).toUpperCase(),
+  );
 }
 
 enum MoneyType { income, expense }
