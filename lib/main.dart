@@ -6,6 +6,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,6 +18,59 @@ import 'fim_help_assistant.dart';
 import 'malaysia_ticket_portal.dart';
 import 'money_manager_page.dart';
 import 'user_manual_page.dart';
+
+enum CivicWeather { clear, hot, rain, storm }
+
+final ValueNotifier<CivicWeather> appWeather = ValueNotifier<CivicWeather>(
+  CivicWeather.clear,
+);
+
+Future<void> _refreshCivicWeather() async {
+  try {
+    if (!await Geolocator.isLocationServiceEnabled()) return;
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      return;
+    }
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.low,
+        timeLimit: Duration(seconds: 8),
+      ),
+    );
+    final uri = Uri.parse(
+      'https://api.open-meteo.com/v1/forecast?latitude=${position.latitude}&longitude=${position.longitude}&current=temperature_2m,weather_code&temperature_unit=celsius',
+    );
+    final client = HttpClient();
+    final request = await client.getUrl(uri);
+    final response = await request.close();
+    if (response.statusCode != HttpStatus.ok) {
+      client.close(force: true);
+      return;
+    }
+    final data = jsonDecode(
+      await response.transform(utf8.decoder).join(),
+    ) as Map<String, dynamic>;
+    client.close(force: true);
+    final current = data['current'] as Map<String, dynamic>?;
+    final code = (current?['weather_code'] as num?)?.toInt() ?? 0;
+    final temperature = (current?['temperature_2m'] as num?)?.toDouble() ?? 0;
+    final weather = code >= 95
+        ? CivicWeather.storm
+        : code >= 51 && code <= 82
+        ? CivicWeather.rain
+        : temperature >= 33
+        ? CivicWeather.hot
+        : CivicWeather.clear;
+    appWeather.value = weather;
+  } catch (_) {
+    // Weather is decorative; the app remains usable without location/network.
+  }
+}
 
 const _appTitle = 'FIM - Foreigner in Malaysia';
 const _workerLogoAsset = 'assets/images/foreigner_in_malaysia_logo.png';
@@ -1510,9 +1564,20 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
     vsync: this,
     duration: const Duration(seconds: 18),
   )..repeat(reverse: true);
+  Timer? _weatherTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _weatherTimer = Timer(
+      const Duration(milliseconds: 900),
+      _refreshCivicWeather,
+    );
+  }
 
   @override
   void dispose() {
+    _weatherTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -1536,12 +1601,16 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
         ),
         Positioned.fill(
           child: IgnorePointer(
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, _) => CustomPaint(
-                painter: _WeatherBackdropPainter(
-                  progress: reduceMotion ? 0.5 : _controller.value,
-                  isDark: isDark,
+            child: ValueListenableBuilder<CivicWeather>(
+              valueListenable: appWeather,
+              builder: (context, weather, _) => AnimatedBuilder(
+                animation: _controller,
+                builder: (context, _) => CustomPaint(
+                  painter: _WeatherBackdropPainter(
+                    progress: reduceMotion ? 0.5 : _controller.value,
+                    isDark: isDark,
+                    weather: weather,
+                  ),
                 ),
               ),
             ),
@@ -1594,19 +1663,18 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
 }
 
 class _WeatherBackdropPainter extends CustomPainter {
-  const _WeatherBackdropPainter({required this.progress, required this.isDark});
+  const _WeatherBackdropPainter({
+    required this.progress,
+    required this.isDark,
+    required this.weather,
+  });
 
   final double progress;
   final bool isDark;
+  final CivicWeather weather;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final hour = DateTime.now().hour;
-    final weather = hour >= 11 && hour < 16
-        ? 'heat'
-        : hour >= 17 && hour <= 22
-        ? 'rain'
-        : 'storm';
     final tint = isDark ? Colors.white : const Color(0xFF126A86);
     final opacity = isDark ? 0.045 : 0.035;
     final paint = Paint()
@@ -1614,7 +1682,7 @@ class _WeatherBackdropPainter extends CustomPainter {
       ..strokeWidth = 1.4
       ..style = PaintingStyle.stroke;
 
-    if (weather == 'heat') {
+    if (weather == CivicWeather.hot) {
       for (var i = 0; i < 7; i++) {
         final x = size.width * (0.08 + i * 0.15);
         final wave = (progress * 2 * math.pi) + i * 0.7;
@@ -1633,13 +1701,13 @@ class _WeatherBackdropPainter extends CustomPainter {
       return;
     }
 
-    final count = weather == 'storm' ? 34 : 24;
+    final count = weather == CivicWeather.storm ? 34 : 24;
     for (var i = 0; i < count; i++) {
       final x = (i * 83.0) % size.width;
       final y = ((i * 47.0) + progress * size.height * 1.35) % size.height;
       canvas.drawLine(Offset(x, y), Offset(x - 9, y + 22), paint);
     }
-    if (weather == 'storm' && progress > 0.82) {
+    if (weather == CivicWeather.storm && progress > 0.82) {
       final lightning = Paint()
         ..color = Colors.amber.withValues(alpha: isDark ? 0.10 : 0.06)
         ..style = PaintingStyle.fill;
@@ -1657,7 +1725,9 @@ class _WeatherBackdropPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _WeatherBackdropPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.isDark != isDark;
+      oldDelegate.progress != progress ||
+      oldDelegate.isDark != isDark ||
+      oldDelegate.weather != weather;
 }
 
 class _CulturalOrb extends StatelessWidget {
