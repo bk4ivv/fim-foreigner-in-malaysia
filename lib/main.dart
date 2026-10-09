@@ -1109,7 +1109,7 @@ const languageVisuals = <AppLanguage, LanguageVisual>{
 };
 
 final ValueNotifier<ThemeMode> appThemeMode = ValueNotifier<ThemeMode>(
-  ThemeMode.system,
+  ThemeMode.light,
 );
 final ValueNotifier<AppLanguage?> activeWorkerLanguage =
     ValueNotifier<AppLanguage?>(null);
@@ -1590,9 +1590,7 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
     return Stack(
       children: [
         Positioned.fill(
-          child: ColoredBox(
-            color: isDark ? AppPalette.midnight : AppPalette.paper,
-          ),
+          child: ColoredBox(color: isDark ? AppPalette.midnight : Colors.white),
         ),
         Positioned.fill(
           child: IgnorePointer(
@@ -1619,7 +1617,7 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
         Positioned.fill(
           child: IgnorePointer(
             child: Opacity(
-              opacity: isDark ? 0.045 : 0.075,
+              opacity: isDark ? 0.045 : 0.045,
               child: Image.asset(
                 'assets/images/culture_batik_texture.jpg',
                 fit: BoxFit.cover,
@@ -1640,7 +1638,7 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
                   child: _CulturalOrb(
                     asset: 'assets/images/culture_rainforest_durian.jpg',
                     size: 190,
-                    opacity: isDark ? 0.08 : 0.11,
+                    opacity: isDark ? 0.08 : 0.035,
                   ),
                 ),
                 Positioned(
@@ -1649,7 +1647,7 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
                   child: _CulturalOrb(
                     asset: 'assets/images/culture_lrt_heritage.jpg',
                     size: 220,
-                    opacity: isDark ? 0.06 : 0.085,
+                    opacity: isDark ? 0.06 : 0.03,
                   ),
                 ),
               ],
@@ -3441,6 +3439,55 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
     );
   }
 
+  void _openBottomDestination(int index) {
+    setState(() => _selectedIndex = index);
+    switch (index) {
+      case 0:
+        return;
+      case 1:
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => _LearningTab(
+              language: widget.language,
+              onOpenCountryHub: _openCountryHub,
+            ),
+          ),
+        );
+      case 2:
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => _HelpTab(
+              language: widget.language,
+              onOpenCountryHub: _openCountryHub,
+              onOpenAppInformation: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => AppInformationPage(copy: _copy),
+                ),
+              ),
+              onOpenPrivacy: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => PrivacyPage(copy: _copy),
+                ),
+              ),
+              onOpenCreatorProfile: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => CreatorProfilePage(copy: _copy),
+                ),
+              ),
+            ),
+          ),
+        );
+      case 3:
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => CommunityEmailPage(
+              isBangla: widget.language == AppLanguage.bangla,
+            ),
+          ),
+        );
+    }
+  }
+
   void _openMoneyManager() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -3734,6 +3781,28 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
               ),
             ),
             onOpenGames: _showGamesComingSoon,
+          ),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: _openBottomDestination,
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.grid_view_rounded),
+                label: _navigationLabel(0),
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.menu_book_outlined),
+                label: _navigationLabel(1),
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.support_agent_outlined),
+                label: _navigationLabel(2),
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.forum_outlined),
+                label: _navigationLabel(3),
+              ),
+            ],
           ),
         ),
       ),
@@ -4323,6 +4392,115 @@ class _FimMenuCard extends StatelessWidget {
   );
 }
 
+class _V218ServiceCard extends StatelessWidget {
+  const _V218ServiceCard({
+    required this.title,
+    required this.onTap,
+    this.logoAsset,
+    this.icon,
+    this.color = AppPalette.flagNavy,
+  });
+
+  final String title;
+  final VoidCallback onTap;
+  final String? logoAsset;
+  final IconData? icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      elevation: 1.5,
+      shadowColor: const Color(0x22001055),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(7, 12, 7, 10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 72,
+                height: 48,
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF6F7FA),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFDCE0E7)),
+                ),
+                child: logoAsset != null
+                    ? Image.asset(
+                        logoAsset!,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) => Icon(
+                          icon ?? Icons.public_rounded,
+                          color: color,
+                          size: 27,
+                        ),
+                      )
+                    : Icon(
+                        icon ?? Icons.public_rounded,
+                        color: color,
+                        size: 27,
+                      ),
+              ),
+              const SizedBox(height: 9),
+              Text(
+                title,
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppPalette.flagNavy,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w900,
+                  height: 1.1,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _serviceCardTitle(ServiceItem service, bool bangla) {
+  if (bangla) {
+    switch (service.id) {
+      case ServiceId.visa:
+        return 'ভিসা স্ট্যাটাস';
+      case ServiceId.fomema:
+        return 'FOMEMA চেক';
+      case ServiceId.student:
+        return 'EMGS';
+      case ServiceId.epf:
+        return 'EPF / KWSP';
+      case ServiceId.cidb:
+        return 'CIDB CIMS';
+      case ServiceId.fwcms:
+        return 'FWCMS';
+    }
+  }
+  switch (service.id) {
+    case ServiceId.visa:
+      return 'Visa status';
+    case ServiceId.fomema:
+      return 'FOMEMA check';
+    case ServiceId.student:
+      return 'EMGS';
+    case ServiceId.epf:
+      return 'EPF / KWSP';
+    case ServiceId.cidb:
+      return 'CIDB CIMS';
+    case ServiceId.fwcms:
+      return 'FWCMS';
+  }
+}
+
 class _WorkerDashboardTab extends StatelessWidget {
   const _WorkerDashboardTab({
     required this.language,
@@ -4361,60 +4539,78 @@ class _WorkerDashboardTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bn = language == AppLanguage.bangla;
-    final items = <_FimMenuItem>[
-      _FimMenuItem(
-        title: bn ? 'সরকারি সেবা' : 'Official services',
-        subtitle: bn
-            ? 'Visa · FOMEMA · EPF · CIDB'
-            : 'Visa · FOMEMA · EPF · CIDB',
-        icon: Icons.verified_outlined,
-        color: AppPalette.civicBlue,
-        action: onOpenServices,
+    final label = (String en, String bnText) => bn ? bnText : en;
+    final cards = <Widget>[
+      for (final service in services)
+        _V218ServiceCard(
+          title: _serviceCardTitle(service, bn),
+          logoAsset: service.logoAsset,
+          color: service.color,
+          onTap: () => onService(service),
+        ),
+      _V218ServiceCard(
+        title: label('Gold reference', 'সোনার রেফারেন্স রেট'),
+        icon: Icons.workspace_premium_outlined,
+        color: AppPalette.flagNavy,
+        onTap: onOpenCountryHub,
       ),
-      _FimMenuItem(
-        title: bn ? 'টিকিট ও ইভেন্ট' : 'Tickets & events',
-        subtitle: bn
-            ? 'সিনেমা · আকর্ষণ · বাস · বিমান'
-            : 'Movies · attractions · travel',
-        icon: Icons.confirmation_number_outlined,
+      _V218ServiceCard(
+        title: label('Cinema tickets', 'সিনেমা টিকিট'),
+        logoAsset: 'assets/images/official-portals/gsc.png',
         color: AppPalette.hibiscus,
-        action: onOpenTicketPortal,
+        onTap: onOpenTicketPortal,
       ),
-      _FimMenuItem(
-        title: bn ? 'অভিজ্ঞতার মানচিত্র' : 'Experience map',
-        subtitle: bn ? 'থাকা, কাজ ও সতর্কতা' : 'Places, stays and warnings',
-        icon: Icons.map_outlined,
+      _V218ServiceCard(
+        title: label('Attraction tickets', 'আকর্ষণের টিকিট'),
+        logoAsset: 'assets/images/official-portals/klook.ico',
+        color: AppPalette.flagRed,
+        onTap: onOpenTicketPortal,
+      ),
+      _V218ServiceCard(
+        title: label('Malaysia events', 'মালয়েশিয়ার ইভেন্ট'),
+        logoAsset: 'assets/images/official-portals/eventbrite.png',
+        color: AppPalette.flagNavy,
+        onTap: onOpenTicketPortal,
+      ),
+      _V218ServiceCard(
+        title: label('Translate', 'অনুবাদ'),
+        icon: Icons.translate_rounded,
+        color: const Color(0xFF1A73E8),
+        onTap: () => onTool(ToolId.translate),
+      ),
+      _V218ServiceCard(
+        title: label('Prayer times', 'নামাজের সময়'),
+        icon: Icons.mosque_outlined,
         color: const Color(0xFF2D8A72),
-        action: onOpenExperienceMap,
+        onTap: onOpenHelp,
       ),
-      _FimMenuItem(
-        title: bn ? 'শেখা' : 'Learn',
-        subtitle: bn ? 'Malay শব্দ ও বাক্য' : 'Malay phrases and words',
-        icon: Icons.menu_book_outlined,
-        color: AppPalette.flagYellow,
-        action: onOpenLearn,
+      _V218ServiceCard(
+        title: label('QR scanner', 'QR স্ক্যানার'),
+        icon: Icons.qr_code_scanner_rounded,
+        color: const Color(0xFF5E35B1),
+        onTap: () => onTool(ToolId.qrScanner),
       ),
-      _FimMenuItem(
-        title: bn ? 'সহায়তা ও তথ্য' : 'Help & info',
-        subtitle: bn
-            ? 'গাইড, সহায়তা ও জরুরি নম্বর'
-            : 'Guides and emergency help',
-        icon: Icons.support_agent_outlined,
-        color: const Color(0xFFB477C5),
-        action: onOpenHelp,
+      _V218ServiceCard(
+        title: label('iLovePDF', 'iLovePDF'),
+        icon: Icons.picture_as_pdf_outlined,
+        color: AppPalette.flagRed,
+        onTap: () => onTool(ToolId.fileConverter),
       ),
-      _FimMenuItem(
-        title: bn ? 'ডেইলি টুলস' : 'Daily tools',
-        subtitle: bn
-            ? 'রেট · অনুবাদ · QR · PDF'
-            : 'Rates · translate · QR · PDF',
-        icon: Icons.build_circle_outlined,
-        color: AppPalette.flagYellow,
-        action: onOpenTools,
+      _V218ServiceCard(
+        title: label('Travel', 'ভ্রমণ'),
+        logoAsset: 'assets/images/official-portals/traveloka.png',
+        color: AppPalette.flagNavy,
+        onTap: () => onTool(ToolId.trips),
+      ),
+      _V218ServiceCard(
+        title: label('Money manager', 'মানি ম্যানেজার'),
+        icon: Icons.account_balance_wallet_outlined,
+        color: const Color(0xFF2D8A72),
+        onTap: onOpenMoneyManager,
       ),
     ];
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 28),
       children: [
         CivicHeroPanel(
           child: Row(
@@ -4423,8 +4619,8 @@ class _WorkerDashboardTab extends StatelessWidget {
                 borderRadius: BorderRadius.circular(18),
                 child: Image.asset(
                   _workerLogoAsset,
-                  width: 54,
-                  height: 54,
+                  width: 58,
+                  height: 58,
                   fit: BoxFit.cover,
                 ),
               ),
@@ -4433,8 +4629,8 @@ class _WorkerDashboardTab extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _HeroStatusPill(label: 'FIM MENU'),
-                    const SizedBox(height: 10),
+                    const _HeroStatusPill(label: 'WORKER DASHBOARD'),
+                    const SizedBox(height: 9),
                     Text(
                       copy.servicePageTitle,
                       style: const TextStyle(
@@ -4443,7 +4639,7 @@ class _WorkerDashboardTab extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 4),
                     Text(
                       copy.servicePageSubtitle,
                       maxLines: 2,
@@ -4460,42 +4656,31 @@ class _WorkerDashboardTab extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
         _VerifiedAlertStrip(
           label: '${copy.officialService} · 999',
           onTap: onOpenCountryHub,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         CivicSectionLabel(
-          label: bn ? 'সব ক্যাটাগরি' : 'All categories',
-          trailing: _CountPill(label: '${items.length} AREAS'),
+          label: bn
+              ? 'সরকারি মালয়েশিয়ান সেবা'
+              : 'Official Malaysian services',
+          trailing: _CountPill(label: '${cards.length} SERVICES'),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: items.length,
+          itemCount: cards.length,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 1.25,
+            crossAxisCount: 3,
+            childAspectRatio: .82,
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
           ),
-          itemBuilder: (context, index) =>
-              _FimMenuCard(item: items[index], onTap: items[index].action),
+          itemBuilder: (context, index) => cards[index],
         ),
-        const SizedBox(height: 14),
-        if (language != AppLanguage.english)
-          _UtilityListTile(
-            icon: Icons.public_rounded,
-            title: bn
-                ? 'বাংলা সহায়তা কেন্দ্র'
-                : _countryHubProfileFor(language).hubTitle,
-            subtitle: bn
-                ? 'শেখা, সহায়তা, সোনার রেফারেন্স ও সরকারি তথ্য'
-                : _countryHubProfileFor(language).hubSubtitle,
-            onTap: onOpenCountryHub,
-          ),
       ],
     );
   }

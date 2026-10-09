@@ -92,10 +92,11 @@ void main() {
     );
 
     expect(find.text('FIM - Foreigner in Malaysia'), findsOneWidget);
-    expect(find.text('Official services'), findsOneWidget);
-    expect(find.text('Experience map'), findsOneWidget);
-    expect(find.text('Tickets & events'), findsOneWidget);
-    expect(find.text('Community'), findsNothing);
+    expect(find.text('Official Malaysian services'), findsOneWidget);
+    expect(find.text('Visa status'), findsOneWidget);
+    expect(find.text('Cinema tickets'), findsOneWidget);
+    expect(find.text('Money manager'), findsOneWidget);
+    expect(find.text('Community'), findsOneWidget);
   });
   testWidgets('opens the FIM menu with the Experience Map shortcut', (
     tester,
