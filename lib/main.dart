@@ -1569,9 +1569,10 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
   @override
   void initState() {
     super.initState();
-    _weatherTimer = Timer(
-      const Duration(milliseconds: 900),
-      _refreshCivicWeather,
+    Timer(const Duration(milliseconds: 900), _refreshCivicWeather);
+    _weatherTimer = Timer.periodic(
+      const Duration(minutes: 15),
+      (_) => _refreshCivicWeather(),
     );
   }
 
@@ -1595,23 +1596,6 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
         Positioned.fill(
           child: IgnorePointer(
             child: CustomPaint(painter: _CivicBackdropPainter(isDark: isDark)),
-          ),
-        ),
-        Positioned.fill(
-          child: IgnorePointer(
-            child: ValueListenableBuilder<CivicWeather>(
-              valueListenable: appWeather,
-              builder: (context, weather, _) => AnimatedBuilder(
-                animation: _controller,
-                builder: (context, _) => CustomPaint(
-                  painter: _WeatherBackdropPainter(
-                    progress: reduceMotion ? 0.5 : _controller.value,
-                    isDark: isDark,
-                    weather: weather,
-                  ),
-                ),
-              ),
-            ),
           ),
         ),
         Positioned.fill(
@@ -1655,6 +1639,24 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
           },
         ),
         widget.child,
+        Positioned.fill(
+          child: IgnorePointer(
+            child: ValueListenableBuilder<CivicWeather>(
+              valueListenable: appWeather,
+              builder: (context, weather, _) => AnimatedBuilder(
+                animation: _controller,
+                builder: (context, _) => CustomPaint(
+                  painter: _WeatherBackdropPainter(
+                    progress: reduceMotion ? 0.5 : _controller.value,
+                    isDark: isDark,
+                    weather: weather,
+                    foreground: true,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -1665,20 +1667,26 @@ class _WeatherBackdropPainter extends CustomPainter {
     required this.progress,
     required this.isDark,
     required this.weather,
+    this.foreground = false,
   });
 
   final double progress;
   final bool isDark;
   final CivicWeather weather;
+  final bool foreground;
 
   @override
   void paint(Canvas canvas, Size size) {
     final tint = isDark ? Colors.white : const Color(0xFF126A86);
-    final opacity = isDark ? 0.045 : 0.035;
+    final opacity = foreground
+        ? (isDark ? 0.12 : 0.085)
+        : (isDark ? 0.045 : 0.035);
     final paint = Paint()
       ..color = tint.withValues(alpha: opacity)
       ..strokeWidth = 1.4
       ..style = PaintingStyle.stroke;
+
+    if (weather == CivicWeather.clear) return;
 
     if (weather == CivicWeather.hot) {
       for (var i = 0; i < 7; i++) {
@@ -1725,7 +1733,8 @@ class _WeatherBackdropPainter extends CustomPainter {
   bool shouldRepaint(covariant _WeatherBackdropPainter oldDelegate) =>
       oldDelegate.progress != progress ||
       oldDelegate.isDark != isDark ||
-      oldDelegate.weather != weather;
+      oldDelegate.weather != weather ||
+      oldDelegate.foreground != foreground;
 }
 
 class _CulturalOrb extends StatelessWidget {
