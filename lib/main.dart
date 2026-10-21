@@ -8454,6 +8454,129 @@ class CreatorProfilePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF010066), Color(0xFF173F88)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.business_rounded, color: Colors.white, size: 28),
+                      SizedBox(width: 10),
+                      Text(
+                        'IBEDGE',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    copy.languageName == 'বাংলা'
+                        ? 'FIM-এর অফিসিয়াল brand ও credit'
+                        : 'Official brand and credit for FIM',
+                    style: const TextStyle(
+                      color: Color(0xFFD8E8FF),
+                      fontSize: 12.5,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _ContactButton(
+              icon: Icons.language_rounded,
+              title: 'IBEDGE website',
+              subtitle: 'ibedge.blogspot.com',
+              onPressed: () => _launch(
+                context,
+                Uri.parse('https://ibedge.blogspot.com'),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _ContactButton(
+              icon: Icons.facebook_rounded,
+              title: 'IBEDGE Facebook',
+              subtitle: 'facebook.com/ibedge2u',
+              onPressed: () => _launch(
+                context,
+                Uri.parse('https://www.facebook.com/ibedge2u'),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _ContactButton(
+              icon: Icons.camera_alt_outlined,
+              title: 'IBEDGE Instagram',
+              subtitle: 'instagram.com/ibedge2u',
+              onPressed: () => _launch(
+                context,
+                Uri.parse('https://www.instagram.com/ibedge2u'),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _ContactButton(
+              icon: Icons.code_rounded,
+              title: 'IBEDGE GitHub',
+              subtitle: 'github.com/IBEDGE',
+              onPressed: () => _launch(
+                context,
+                Uri.parse('https://github.com/IBEDGE'),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _ContactButton(
+              icon: Icons.music_note_rounded,
+              title: 'IBEDGE TikTok',
+              subtitle: 'tiktok.com/@ibedge2u',
+              onPressed: () => _launch(
+                context,
+                Uri.parse('https://www.tiktok.com/@ibedge2u'),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _ContactButton(
+              icon: Icons.business_center_outlined,
+              title: 'IBEDGE LinkedIn',
+              subtitle: 'linkedin.com/company/ibedge-official',
+              onPressed: () => _launch(
+                context,
+                Uri.parse('https://www.linkedin.com/company/ibedge-official/'),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _ContactButton(
+              icon: Icons.mail_outline_rounded,
+              title: 'IBEDGE business email',
+              subtitle: 'support.ibedge@gmail.com',
+              onPressed: () => _launch(
+                context,
+                Uri(scheme: 'mailto', path: 'support.ibedge@gmail.com'),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _ContactButton(
+              icon: Icons.chat_rounded,
+              title: 'IBEDGE WhatsApp',
+              subtitle: '+60166700989',
+              onPressed: () => _launch(
+                context,
+                Uri.parse('https://wa.me/60166700989'),
+              ),
+            ),
+            const SizedBox(height: 18),
             _ProfileSection(
               icon: Icons.engineering_outlined,
               title: profile.aboutTitle,

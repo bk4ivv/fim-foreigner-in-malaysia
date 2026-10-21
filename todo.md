@@ -441,3 +441,9 @@ This request supersedes the approved Community tab as the primary fifth navigati
 - [x] Add selected-country currency display, monthly navigation, balance, income/expense summary, categories, notes, date selection, delete confirmation, and empty state.
 - [x] Add Bangla, Malay, Hindi, Urdu, and English core Money Manager labels.
 - [x] Keep personal finance data off the server by default.
+
+## IBEDGE Credit and Business Links
+
+- [x] Highlight IBEDGE as the official FIM brand in the Creator Profile credit section.
+- [x] Add IBEDGE Facebook, Instagram, GitHub, TikTok, LinkedIn, website, business email, and WhatsApp links.
+- [x] Keep the WhatsApp number limited to the IBEDGE business contact section rather than showing it as a general app contact.
