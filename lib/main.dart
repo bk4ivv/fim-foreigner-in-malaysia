@@ -1448,6 +1448,33 @@ _ExitCopy _exitCopyFor(AppLanguage? language) {
   }
 }
 
+String _inviteLabelFor(AppLanguage? language) {
+  if (language == AppLanguage.bangla) return 'বন্ধুকে FIM শেয়ার করুন';
+  if (language == AppLanguage.malay) return 'Kongsi FIM dengan rakan';
+  if (language == AppLanguage.hindi) return 'दोस्त के साथ FIM साझा करें';
+  if (language == AppLanguage.urdu) return 'دوست کے ساتھ FIM شیئر کریں';
+  if (language == AppLanguage.english || language == null) {
+    return 'Invite a friend to use FIM';
+  }
+  return 'Share FIM with a friend';
+}
+
+String _inviteMessageFor(AppLanguage? language) {
+  if (language == AppLanguage.bangla) {
+    return 'FIM - Foreigner in Malaysia অ্যাপটি ব্যবহার করে দেখুন। মালয়েশিয়ায় বিদেশিদের জন্য সরকারি সেবা, শেখা, tools ও সহায়তা এক জায়গায়.\n\nডাউনলোড করুন: https://play.google.com/store/apps/details?id=com.expatstatuschecker.expat_status_checker';
+  }
+  if (language == AppLanguage.malay) {
+    return 'Cuba FIM - Foreigner in Malaysia. Akses perkhidmatan rasmi, pembelajaran, alat dan bantuan untuk warga asing di Malaysia.\n\nMuat turun: https://play.google.com/store/apps/details?id=com.expatstatuschecker.expat_status_checker';
+  }
+  if (language == AppLanguage.hindi) {
+    return 'FIM - Foreigner in Malaysia आज़माएं। मलेशिया में विदेशियों के लिए सरकारी सेवाएं, सीखने के संसाधन और सहायता एक ही जगह।\n\nडाउनलोड करें: https://play.google.com/store/apps/details?id=com.expatstatuschecker.expat_status_checker';
+  }
+  if (language == AppLanguage.urdu) {
+    return 'FIM - Foreigner in Malaysia استعمال کریں۔ ملائیشیا میں غیر ملکیوں کے لیے سرکاری خدمات، سیکھنے کے وسائل اور مدد ایک جگہ۔\n\nڈاؤن لوڈ کریں: https://play.google.com/store/apps/details?id=com.expatstatuschecker.expat_status_checker';
+  }
+  return 'Try FIM - Foreigner in Malaysia. Official services, learning, useful tools and help for foreigners in Malaysia in one app.\n\nDownload: https://play.google.com/store/apps/details?id=com.expatstatuschecker.expat_status_checker';
+}
+
 ThemeData _buildAppTheme(Brightness brightness) {
   final isDark = brightness == Brightness.dark;
   final scheme = ColorScheme(
@@ -3385,6 +3412,15 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _inviteFriend(dialogContext),
+                    icon: const Icon(Icons.share_rounded),
+                    label: Text(_inviteLabelFor(widget.language)),
+                  ),
+                ),
               ],
             ),
           ),
@@ -3393,6 +3429,23 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
     );
     _isExitPromptOpen = false;
     if (shouldExit == true && mounted) await SystemNavigator.pop();
+  }
+
+  Future<void> _inviteFriend(BuildContext dialogContext) async {
+    final label = _inviteLabelFor(widget.language);
+    final message = _inviteMessageFor(widget.language);
+    try {
+      await const MethodChannel('fim/share').invokeMethod<void>(
+        'shareText',
+        {'text': message},
+      );
+    } catch (_) {
+      if (dialogContext.mounted) {
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
+          SnackBar(content: Text('$label: $message')),
+        );
+      }
+    }
   }
 
   String _serviceTitle(ServiceId id) {
