@@ -454,3 +454,11 @@ This request supersedes the approved Community tab as the primary fifth navigati
 - [x] Preserve the existing Play Store/app identity; the new logo is added as an available asset and is not yet used as the primary app icon.
 
 - [x] Add the supplied cyan-background FIM-TM logo as `assets/images/FIM-TM.png`.
+
+## IBEDGE / Creator Credit Split
+
+- [x] Set Community post/report email recipient to `support.ibedge@gmail.com`.
+- [x] Keep `hire.borhankabir@hotmail.com` for direct creator/hiring contact in Credit and User Manual.
+- [x] Present Credit as two layers: FIM made by IBEDGE; IBEDGE creator Khandaker Md Borhan Kabir (`@bk4ivv`).
+- [x] Use only public, verifiable identity details and links; do not add private or unverified personal data.
+- Public reference links reviewed: https://www.facebook.com/bk4ivv, https://github.com/IBEDGE, https://my.linkedin.com/in/bk4ivv

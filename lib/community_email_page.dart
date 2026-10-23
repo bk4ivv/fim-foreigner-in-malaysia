@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-const _communityEmail = 'hire.borhankabir@hotmail.com';
+const _communityEmail = 'support.ibedge@gmail.com';
 
 class CommunityEmailPage extends StatefulWidget {
   const CommunityEmailPage({super.key, required this.isBangla});

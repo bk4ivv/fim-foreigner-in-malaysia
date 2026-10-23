@@ -8577,6 +8577,29 @@ class CreatorProfilePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
+            Text(
+              copy.languageName == 'বাংলা'
+                  ? 'IBEDGE-এর creator'
+                  : 'Creator of IBEDGE',
+              style: const TextStyle(
+                color: Color(0xFF163A38),
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              copy.languageName == 'বাংলা'
+                  ? 'Khandaker Md Borhan Kabir (@bk4ivv) — FIM তৈরি করেছেন IBEDGE-এর creator হিসেবে।'
+                  : 'Khandaker Md Borhan Kabir (@bk4ivv) — creator of IBEDGE and the person behind FIM.',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withValues(
+                  alpha: 0.72,
+                ),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 14),
             _ProfileSection(
               icon: Icons.engineering_outlined,
               title: profile.aboutTitle,
