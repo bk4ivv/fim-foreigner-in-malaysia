@@ -1,0 +1,34 @@
+name: Build FIM test APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.0'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK for device testing
+        run: flutter build apk --debug
+
+      - name: Rename APK with app version and build number
+        run: cp build/app/outputs/flutter-apk/app-debug.apk FIM-Foreigner-in-Malaysia-v2.20.3-build50-test.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FIM-Foreigner-in-Malaysia-v2.20.3-build50-test
+          path: FIM-Foreigner-in-Malaysia-v2.20.3-build50-test.apk
+          if-no-files-found: error
