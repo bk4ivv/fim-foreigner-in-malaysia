@@ -73,7 +73,7 @@ Future<void> _refreshCivicWeather() async {
 }
 
 const _appTitle = 'FIM - Foreigner in Malaysia';
-const _workerLogoAsset = 'assets/images/foreigner_in_malaysia_logo.png';
+const _workerLogoAsset = 'assets/images/FIM-TM.png';
 const _creatorAvatarAsset =
     'assets/images/khandaker-md-borhan-kabir-profile.jpg';
 
