@@ -452,3 +452,5 @@ This request supersedes the approved Community tab as the primary fifth navigati
 
 - [x] Add the supplied transparent white FIM-T logo as `assets/images/FIM-T.png`.
 - [x] Preserve the existing Play Store/app identity; the new logo is added as an available asset and is not yet used as the primary app icon.
+
+- [x] Add the supplied cyan-background FIM-TM logo as `assets/images/FIM-TM.png`.
