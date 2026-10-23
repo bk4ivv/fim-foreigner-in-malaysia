@@ -447,3 +447,8 @@ This request supersedes the approved Community tab as the primary fifth navigati
 - [x] Highlight IBEDGE as the official FIM brand in the Creator Profile credit section.
 - [x] Add IBEDGE Facebook, Instagram, GitHub, TikTok, LinkedIn, website, business email, and WhatsApp links.
 - [x] Keep the WhatsApp number limited to the IBEDGE business contact section rather than showing it as a general app contact.
+
+## FIM-T Transparent Logo Asset
+
+- [x] Add the supplied transparent white FIM-T logo as `assets/images/FIM-T.png`.
+- [x] Preserve the existing Play Store/app identity; the new logo is added as an available asset and is not yet used as the primary app icon.
