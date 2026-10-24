@@ -947,6 +947,74 @@ class _TransactionFormState extends State<_TransactionForm> {
     );
   }
 
+  Future<void> _openCalculator() async {
+    final expression = TextEditingController(text: _amountController.text);
+    final result = await showDialog<double>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Calculator'),
+        content: TextField(
+          controller: expression,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            hintText: '120 + 35 - 10',
+            prefixIcon: Icon(Icons.calculate_outlined),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(widget.copy.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = _calculateExpression(expression.text);
+              if (value != null) Navigator.pop(dialogContext, value);
+            },
+            child: const Text('Use result'),
+          ),
+        ],
+      ),
+    );
+    expression.dispose();
+    if (result != null && mounted) {
+      _amountController.text = result.toStringAsFixed(2);
+    }
+  }
+
+  double? _calculateExpression(String input) {
+    final cleaned = input.replaceAll(' ', '').replaceAll('×', '*').replaceAll('÷', '/');
+    final tokens = RegExp(r'\d+(?:\.\d+)?|[+\-*/]')
+        .allMatches(cleaned)
+        .map((match) => match.group(0)!)
+        .toList();
+    if (tokens.isEmpty || tokens.join() != cleaned || tokens.length.isEven) {
+      return null;
+    }
+    var value = double.parse(tokens.first);
+    for (var i = 1; i < tokens.length; i += 2) {
+      final next = double.tryParse(tokens[i + 1]);
+      if (next == null) return null;
+      switch (tokens[i]) {
+        case '+':
+          value += next;
+          break;
+        case '-':
+          value -= next;
+          break;
+        case '*':
+          value *= next;
+          break;
+        case '/':
+          if (next == 0) return null;
+          value /= next;
+          break;
+      }
+    }
+    return value > 0 ? value : null;
+  }
+
   @override
   Widget build(BuildContext context) => SafeArea(
     child: Padding(
@@ -997,6 +1065,11 @@ class _TransactionFormState extends State<_TransactionForm> {
             decoration: InputDecoration(
               labelText: '${widget.copy.amount} (${widget.currencyCode})',
               prefixIcon: const Icon(Icons.payments_outlined),
+              suffixIcon: IconButton(
+                onPressed: _openCalculator,
+                tooltip: 'Calculator',
+                icon: const Icon(Icons.calculate_outlined),
+              ),
             ),
           ),
           const SizedBox(height: 10),

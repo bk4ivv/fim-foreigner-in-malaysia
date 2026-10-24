@@ -462,3 +462,14 @@ This request supersedes the approved Community tab as the primary fifth navigati
 - [x] Present Credit as two layers: FIM made by IBEDGE; IBEDGE creator Khandaker Md Borhan Kabir (`@bk4ivv`).
 - [x] Use only public, verifiable identity details and links; do not add private or unverified personal data.
 - Public reference links reviewed: https://www.facebook.com/bk4ivv, https://github.com/IBEDGE, https://my.linkedin.com/in/bk4ivv
+
+## v2.20.4 Utility and Visual Polish
+
+- [x] Use transparent `FIM-T.png` for in-app branding.
+- [x] Use the supplied `FIM-TM.png` artwork for Android launcher density icons.
+- [x] Replace the home AppBar menu button with a weather refresh action.
+- [x] Route Prayer times to the official `https://www.e-solat.gov.my/` WebView.
+- [x] Make official-service shortcut logos larger and more visible.
+- [x] Add an amount calculator expression helper to Money Manager transactions.
+- [x] Wrap the Community email form in a Material Scaffold to prevent the `No Material widget found` crash.
+- [ ] Add real Android home-screen widgets for weather, Money Manager, QR scanner and prayer times; this requires a native Android AppWidget layer and must be tested separately from in-app shortcut cards.

@@ -73,7 +73,9 @@ Future<void> _refreshCivicWeather() async {
 }
 
 const _appTitle = 'FIM - Foreigner in Malaysia';
-const _workerLogoAsset = 'assets/images/FIM-TM.png';
+// FIM-TM is reserved for the Android launcher identity. Inside the app,
+// use the transparent FIM-T mark on light and dark surfaces.
+const _workerLogoAsset = 'assets/images/FIM-T.png';
 const _creatorAvatarAsset =
     'assets/images/khandaker-md-borhan-kabir-profile.jpg';
 
@@ -3579,6 +3581,20 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
     );
   }
 
+  void _openPrayerTimes() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => StatusWebViewPage(
+          title: widget.language == AppLanguage.bangla
+              ? 'নামাজের সময়'
+              : 'Prayer times',
+          url: 'https://www.e-solat.gov.my/',
+          copy: _copy,
+        ),
+      ),
+    );
+  }
+
   void _showGamesComingSoon() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -3789,7 +3805,7 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
                 ),
               ),
             ),
-            onOpenMenu: () => _scaffoldKey.currentState?.openDrawer(),
+            showWeather: true,
             onOpenLanguages: _openSettingsPage,
           ),
           body: _WorkerDashboardTab(
@@ -3804,6 +3820,7 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
             onOpenExperienceMap: _openExperienceMap,
             onOpenTools: _openToolsPage,
             onOpenMoneyManager: _openMoneyManager,
+            onOpenPrayerTimes: _openPrayerTimes,
             onOpenLearn: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => _LearningTab(
@@ -4485,9 +4502,9 @@ class _V218ServiceCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 72,
-                height: 48,
-                padding: const EdgeInsets.all(6),
+              width: 88,
+              height: 62,
+              padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF6F7FA),
                   borderRadius: BorderRadius.circular(12),
@@ -4500,13 +4517,13 @@ class _V218ServiceCard extends StatelessWidget {
                         errorBuilder: (_, _, _) => Icon(
                           icon ?? Icons.public_rounded,
                           color: color,
-                          size: 27,
+                          size: 37,
                         ),
                       )
                     : Icon(
                         icon ?? Icons.public_rounded,
                         color: color,
-                        size: 27,
+                        size: 37,
                       ),
               ),
               const SizedBox(height: 9),
@@ -4576,6 +4593,7 @@ class _WorkerDashboardTab extends StatelessWidget {
     required this.onOpenExperienceMap,
     required this.onOpenTools,
     required this.onOpenMoneyManager,
+    required this.onOpenPrayerTimes,
     required this.onOpenLearn,
     required this.onOpenHelp,
     required this.onOpenManual,
@@ -4593,6 +4611,7 @@ class _WorkerDashboardTab extends StatelessWidget {
   final VoidCallback onOpenExperienceMap;
   final VoidCallback onOpenTools;
   final VoidCallback onOpenMoneyManager;
+  final VoidCallback onOpenPrayerTimes;
   final VoidCallback onOpenLearn;
   final VoidCallback onOpenHelp;
   final VoidCallback onOpenManual;
@@ -4644,7 +4663,7 @@ class _WorkerDashboardTab extends StatelessWidget {
         title: label('Prayer times', 'নামাজের সময়'),
         icon: Icons.mosque_outlined,
         color: const Color(0xFF2D8A72),
-        onTap: onOpenHelp,
+        onTap: onOpenPrayerTimes,
       ),
       _V218ServiceCard(
         title: label('QR scanner', 'QR স্ক্যানার'),
@@ -6400,6 +6419,20 @@ class ServiceHomePage extends StatelessWidget {
   }
 }
 
+IconData _weatherIcon(CivicWeather weather) => switch (weather) {
+  CivicWeather.clear => Icons.wb_sunny_outlined,
+  CivicWeather.hot => Icons.wb_sunny_rounded,
+  CivicWeather.rain => Icons.grain_rounded,
+  CivicWeather.storm => Icons.thunderstorm_outlined,
+};
+
+String _weatherLabel(CivicWeather weather) => switch (weather) {
+  CivicWeather.clear => 'Clear weather · tap to refresh',
+  CivicWeather.hot => 'Hot weather · tap to refresh',
+  CivicWeather.rain => 'Rainy weather · tap to refresh',
+  CivicWeather.storm => 'Storm warning · tap to refresh',
+};
+
 class _AppBar extends StatelessWidget implements PreferredSizeWidget {
   const _AppBar({
     required this.title,
@@ -6407,12 +6440,14 @@ class _AppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onOpenManual,
     this.onOpenMenu,
     this.onOpenLanguages,
+    this.showWeather = false,
   });
   final String title;
   final Widget? leading;
   final VoidCallback? onOpenManual;
   final VoidCallback? onOpenMenu;
   final VoidCallback? onOpenLanguages;
+  final bool showWeather;
 
   @override
   Size get preferredSize => const Size.fromHeight(74);
@@ -6467,7 +6502,19 @@ class _AppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ],
       ),
-      actions: const [SizedBox(width: 4)],
+      actions: [
+        if (showWeather)
+          ValueListenableBuilder<CivicWeather>(
+            valueListenable: appWeather,
+            builder: (context, weather, _) => IconButton(
+              tooltip: _weatherLabel(weather),
+              onPressed: () => _refreshCivicWeather(),
+              icon: Icon(_weatherIcon(weather), color: foreground),
+            ),
+          )
+        else
+          const SizedBox(width: 4),
+      ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(5),
         child: Align(

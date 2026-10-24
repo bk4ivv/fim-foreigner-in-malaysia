@@ -89,9 +89,10 @@ class _CommunityEmailPageState extends State<CommunityEmailPage> {
     final isPost = _mode == _CommunityMessageMode.post;
     return Directionality(
       textDirection: TextDirection.ltr,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
-        children: [
+      child: Scaffold(
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
+          children: [
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -254,7 +255,8 @@ class _CommunityEmailPageState extends State<CommunityEmailPage> {
               height: 1.45,
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
