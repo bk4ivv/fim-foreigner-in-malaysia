@@ -1594,11 +1594,15 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
     duration: const Duration(seconds: 18),
   )..repeat(reverse: true);
   Timer? _weatherTimer;
+  Timer? _initialWeatherRefreshTimer;
 
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(milliseconds: 900), _refreshCivicWeather);
+    _initialWeatherRefreshTimer = Timer(
+      const Duration(milliseconds: 900),
+      _refreshCivicWeather,
+    );
     _weatherTimer = Timer.periodic(
       const Duration(minutes: 15),
       (_) => _refreshCivicWeather(),
@@ -1607,6 +1611,7 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
 
   @override
   void dispose() {
+    _initialWeatherRefreshTimer?.cancel();
     _weatherTimer?.cancel();
     _controller.dispose();
     super.dispose();
@@ -3798,6 +3803,7 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
           ),
           appBar: _AppBar(
             title: _appTitle,
+            onOpenMenu: () => _scaffoldKey.currentState?.openDrawer(),
             onOpenManual: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => UserManualPage(
