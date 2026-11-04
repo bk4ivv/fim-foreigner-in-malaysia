@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'community_email_page.dart';
+import 'country_theme.dart';
 import 'expat_experience_map.dart';
 import 'fim_help_assistant.dart';
 import 'malaysia_ticket_portal.dart';
@@ -1117,6 +1118,8 @@ final ValueNotifier<AppLanguage?> activeWorkerLanguage =
     ValueNotifier<AppLanguage?>(null);
 final ValueNotifier<CountryOption?> activeWorkerCountry =
     ValueNotifier<CountryOption?>(null);
+final ValueNotifier<FimCalendarSystem> activeCalendarSystem =
+    ValueNotifier<FimCalendarSystem>(FimCalendarSystem.gregorian);
 
 const _savedCountryKey = 'fim.selected_country_code';
 const _savedLanguageKey = 'fim.selected_language_index';
@@ -1160,19 +1163,26 @@ class ForeignWorkerMalaysiaApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: appThemeMode,
-      builder: (context, mode, _) => MaterialApp(
-        title: _appTitle,
-        debugShowCheckedModeBanner: false,
-        themeMode: mode,
-        theme: _buildAppTheme(Brightness.light),
-        darkTheme: _buildAppTheme(Brightness.dark),
-        builder: (context, child) => CivicAppBackdrop(
-          child: DefaultTextStyle.merge(
-            style: const TextStyle(fontFamilyFallback: ['NotoSansBengali']),
-            child: child ?? const SizedBox.shrink(),
-          ),
-        ),
-        home: const _ExitConfirmationRoot(child: WorkerLaunchPage()),
+      builder: (context, mode, _) => ValueListenableBuilder<CountryOption?>(
+        valueListenable: activeWorkerCountry,
+        builder: (context, country, _) {
+          final profile = countryThemeFor(country?.code);
+          return MaterialApp(
+            title: _appTitle,
+            debugShowCheckedModeBanner: false,
+            themeMode: mode,
+            theme: _buildAppTheme(Brightness.light, profile),
+            darkTheme: _buildAppTheme(Brightness.dark, profile),
+            builder: (context, child) => CivicAppBackdrop(
+              profile: profile,
+              child: DefaultTextStyle.merge(
+                style: const TextStyle(fontFamilyFallback: ['NotoSansBengali']),
+                child: child ?? const SizedBox.shrink(),
+              ),
+            ),
+            home: const _ExitConfirmationRoot(child: WorkerLaunchPage()),
+          );
+        },
       ),
     );
   }
@@ -1477,13 +1487,13 @@ String _inviteMessageFor(AppLanguage? language) {
   return 'Try FIM - Foreigner in Malaysia. Official services, learning, useful tools and help for foreigners in Malaysia in one app.\n\nDownload: https://play.google.com/store/apps/details?id=com.expatstatuschecker.expat_status_checker';
 }
 
-ThemeData _buildAppTheme(Brightness brightness) {
+ThemeData _buildAppTheme(Brightness brightness, CountryThemeProfile profile) {
   final isDark = brightness == Brightness.dark;
   final scheme = ColorScheme(
     brightness: brightness,
-    primary: isDark ? AppPalette.flagYellow : AppPalette.flagNavy,
-    onPrimary: isDark ? AppPalette.flagNavy : AppPalette.flagWhite,
-    secondary: AppPalette.flagRed,
+    primary: isDark ? Color.lerp(profile.accent, Colors.white, .18)! : profile.accent,
+    onPrimary: AppPalette.flagWhite,
+    secondary: profile.accent,
     onSecondary: AppPalette.flagWhite,
     error: AppPalette.flagRed,
     onError: AppPalette.flagWhite,
@@ -1579,9 +1589,10 @@ ThemeData _buildAppTheme(Brightness brightness) {
 }
 
 class CivicAppBackdrop extends StatefulWidget {
-  const CivicAppBackdrop({super.key, required this.child});
+  const CivicAppBackdrop({super.key, required this.child, required this.profile});
 
   final Widget child;
+  final CountryThemeProfile profile;
 
   @override
   State<CivicAppBackdrop> createState() => _CivicAppBackdropState();
@@ -1624,7 +1635,9 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
         ),
         Positioned.fill(
           child: IgnorePointer(
-            child: CustomPaint(painter: _CivicBackdropPainter(isDark: isDark)),
+            child: CustomPaint(
+              painter: _CivicBackdropPainter(isDark: isDark, profile: widget.profile),
+            ),
           ),
         ),
         Positioned.fill(
@@ -1795,9 +1808,10 @@ class _CulturalOrb extends StatelessWidget {
 }
 
 class _CivicBackdropPainter extends CustomPainter {
-  const _CivicBackdropPainter({required this.isDark});
+  const _CivicBackdropPainter({required this.isDark, required this.profile});
 
   final bool isDark;
+  final CountryThemeProfile profile;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1806,7 +1820,7 @@ class _CivicBackdropPainter extends CustomPainter {
     final blueWash = Paint()
       ..color = Colors.black.withValues(alpha: isDark ? 0.18 : 0.025);
     final rule = Paint()
-      ..color = Colors.white.withValues(alpha: isDark ? 0.075 : 0.055)
+      ..color = profile.accent.withValues(alpha: isDark ? 0.13 : 0.09)
       ..strokeWidth = 1;
     canvas.drawCircle(
       Offset(size.width * 1.08, -size.height * 0.02),
@@ -1823,11 +1837,32 @@ class _CivicBackdropPainter extends CustomPainter {
       final end = Offset(size.width + 40, start.dy - size.width * 0.18);
       canvas.drawLine(start, end, rule);
     }
+    final motif = Paint()
+      ..color = profile.accent.withValues(alpha: isDark ? 0.07 : 0.045)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4;
+    final step = profile.pattern == 'rangoli' ? 44.0 : 56.0;
+    for (double x = 18; x < size.width; x += step) {
+      for (double y = 18; y < size.height; y += step) {
+        if (profile.pattern == 'songket' || profile.pattern == 'jaali') {
+          canvas.drawRect(
+            Rect.fromCenter(center: Offset(x, y), width: 16, height: 16),
+            motif,
+          );
+        } else {
+          canvas.drawCircle(
+            Offset(x, y),
+            profile.pattern == 'alpana' ? 6 : 10,
+            motif,
+          );
+        }
+      }
+    }
   }
 
   @override
   bool shouldRepaint(covariant _CivicBackdropPainter oldDelegate) =>
-      oldDelegate.isDark != isDark;
+      oldDelegate.isDark != isDark || oldDelegate.profile.code != profile.code;
 }
 
 class CivicPressable extends StatefulWidget {
@@ -2898,6 +2933,7 @@ class FirstUseGuidePage extends StatelessWidget {
     activeWorkerLanguage.value = language;
     if (country != null) {
       activeWorkerCountry.value = country;
+      activeCalendarSystem.value = countryThemeFor(country.code).defaultCalendar;
       unawaited(_saveWorkerSelection(country!, language));
     }
     Navigator.of(context).pushReplacement(
@@ -3241,6 +3277,7 @@ class _WorkerLaunchPageState extends State<WorkerLaunchPage>
       return;
     }
     activeWorkerCountry.value = saved.country;
+    activeCalendarSystem.value = countryThemeFor(saved.country.code).defaultCalendar;
     activeWorkerLanguage.value = saved.language;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
@@ -3957,6 +3994,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final country = _country;
     if (country == null) return;
     activeWorkerCountry.value = country;
+    activeCalendarSystem.value = countryThemeFor(country.code).defaultCalendar;
     activeWorkerLanguage.value = _language;
     await _saveWorkerSelection(country, _language);
     if (!mounted) return;
@@ -3987,6 +4025,10 @@ class _SettingsPageState extends State<SettingsPage> {
             if (!snapshot.hasData)
               return const Center(child: CircularProgressIndicator());
             final country = _country;
+            final profile = countryThemeFor(country?.code);
+            final selectedCalendar = profile.calendars.contains(activeCalendarSystem.value)
+                ? activeCalendarSystem.value
+                : profile.defaultCalendar;
             return ListView(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
               children: [
@@ -4084,6 +4126,40 @@ class _SettingsPageState extends State<SettingsPage> {
                       );
                       if (selected != null) appThemeMode.value = selected;
                     },
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(profile.motif, color: profile.accent),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'My Country theme · ${profile.countryName}',
+                                style: const TextStyle(fontWeight: FontWeight.w900),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(profile.utilityLine, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: .66), height: 1.35)),
+                        const SizedBox(height: 10),
+                        DropdownButtonFormField<FimCalendarSystem>(
+                          value: selectedCalendar,
+                          decoration: const InputDecoration(labelText: 'Calendar system', prefixIcon: Icon(Icons.calendar_month_outlined)),
+                          items: [for (final system in profile.calendars) DropdownMenuItem(value: system, child: Text(calendarName(system)))],
+                          onChanged: (value) {
+                            if (value != null) activeCalendarSystem.value = value;
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -13124,20 +13200,32 @@ const holidays2026 = <HolidayEntry>[
   HolidayEntry(12, 25, 'Christmas Day', 'Public holiday.'),
 ];
 
-class HolidayCalendarPage extends StatelessWidget {
+class HolidayCalendarPage extends StatefulWidget {
   const HolidayCalendarPage({super.key, required this.language});
 
   final AppLanguage language;
 
-  AppCopy get _copy => appCopies[language]!;
+  @override
+  State<HolidayCalendarPage> createState() => _HolidayCalendarPageState();
+}
+
+class _HolidayCalendarPageState extends State<HolidayCalendarPage> {
+  late FimCalendarSystem _calendar = activeCalendarSystem.value;
+
+  AppCopy get _copy => appCopies[widget.language]!;
 
   @override
   Widget build(BuildContext context) {
+    final profile = countryThemeFor(activeWorkerCountry.value?.code);
+    final selectedCalendar = profile.calendars.contains(activeCalendarSystem.value)
+        ? activeCalendarSystem.value
+        : profile.defaultCalendar;
+    final today = DateTime.now();
     return Directionality(
       textDirection: _copy.direction,
       child: Scaffold(
         appBar: _AppBar(
-          title: 'Malaysia Holidays 2026',
+          title: '${profile.countryName} calendar',
           leading: IconButton(
             tooltip: _copy.backToServices,
             onPressed: () => Navigator.of(context).pop(),
@@ -13158,30 +13246,30 @@ class HolidayCalendarPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFB21F2D), Color(0xFF6F1723)],
+                gradient: LinearGradient(
+                  colors: [profile.accent, Color.lerp(profile.accent, Colors.black, .35)!],
                 ),
                 borderRadius: BorderRadius.circular(22),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Text('🇲🇾', style: TextStyle(fontSize: 34)),
-                  SizedBox(width: 12),
+                  Text(activeWorkerCountry.value?.flag ?? '🇲🇾', style: const TextStyle(fontSize: 34)),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Malaysia public holidays · 2026',
+                          '${profile.countryName} calendar · 2026',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                        SizedBox(height: 3),
+                        const SizedBox(height: 3),
                         Text(
-                          'Twelve cultural photo calendar themes',
+                          profile.utilityLine,
                           style: TextStyle(
                             color: Color(0xFFFFDFD7),
                             fontSize: 11.5,
@@ -13191,6 +13279,36 @@ class HolidayCalendarPage extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'My Country calendar',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(profile.welcome, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: .68), height: 1.35)),
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<FimCalendarSystem>(
+                      value: selectedCalendar,
+                      decoration: const InputDecoration(labelText: 'Date system', prefixIcon: Icon(Icons.event_note_outlined)),
+                      items: [for (final system in profile.calendars) DropdownMenuItem(value: system, child: Text(calendarName(system)))],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => _calendar = value);
+                        activeCalendarSystem.value = value;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    Text('Today · ${calendarShortDate(today, selectedCalendar)}', style: TextStyle(color: profile.accent, fontWeight: FontWeight.w900)),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 12),

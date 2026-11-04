@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:expat_status_checker/main.dart';
+import 'package:expat_status_checker/country_theme.dart';
 import 'package:expat_status_checker/community_email_page.dart';
 import 'package:expat_status_checker/expat_experience_map.dart';
 import 'package:flutter/material.dart';
@@ -37,6 +38,24 @@ AppLanguage? _appLanguageForLabelForTest(String label) {
 }
 
 void main() {
+  test('provides country-inspired themes and calendar layers', () {
+    expect(countryThemeFor('BD').accent, const Color(0xFF007A53));
+    expect(countryThemeFor('IN').pattern, 'rangoli');
+    expect(countryThemeFor('PK').defaultCalendar, FimCalendarSystem.hijri);
+    expect(countryThemeFor('MY').utilityLine, contains('Malaysia'));
+    expect(
+      calendarShortDate(DateTime(2026, 11, 4), FimCalendarSystem.gregorian),
+      '04/11/2026',
+    );
+    expect(
+      calendarShortDate(DateTime(2026, 11, 4), FimCalendarSystem.bangla),
+      contains('1433'),
+    );
+    expect(
+      calendarShortDate(DateTime(2026, 11, 4), FimCalendarSystem.hijri),
+      contains('AH'),
+    );
+  });
   test('normalizes common worker-support links before opening them', () {
     expect(
       normalizeExternalUrl('wa.me/60166700989')?.toString(),
