@@ -8,6 +8,7 @@ class CountryThemeProfile {
     required this.countryName,
     required this.localName,
     required this.accent,
+    required this.secondary,
     required this.wash,
     required this.pattern,
     required this.motif,
@@ -21,6 +22,7 @@ class CountryThemeProfile {
   final String countryName;
   final String localName;
   final Color accent;
+  final Color secondary;
   final Color wash;
   final String pattern;
   final IconData motif;
@@ -33,7 +35,8 @@ class CountryThemeProfile {
 const countryThemeProfiles = <String, CountryThemeProfile>{
   'MY': CountryThemeProfile(
     code: 'MY', countryName: 'Malaysia', localName: 'Malaysia',
-    accent: Color(0xFF123B8B), wash: Color(0xFFE8EFFB), pattern: 'songket',
+    accent: Color(0xFF010066), secondary: Color(0xFFCC0001),
+    wash: Color(0xFFE8EFFB), pattern: 'songket',
     motif: Icons.auto_awesome_mosaic_rounded,
     defaultCalendar: FimCalendarSystem.gregorian,
     calendars: [FimCalendarSystem.gregorian, FimCalendarSystem.hijri],
@@ -42,7 +45,8 @@ const countryThemeProfiles = <String, CountryThemeProfile>{
   ),
   'BD': CountryThemeProfile(
     code: 'BD', countryName: 'Bangladesh', localName: 'বাংলাদেশ',
-    accent: Color(0xFF007A53), wash: Color(0xFFE2F4EC), pattern: 'alpana',
+    accent: Color(0xFF006A4E), secondary: Color(0xFFF42A41),
+    wash: Color(0xFFE2F4EC), pattern: 'alpana',
     motif: Icons.diamond_outlined,
     defaultCalendar: FimCalendarSystem.bangla,
     calendars: [FimCalendarSystem.gregorian, FimCalendarSystem.bangla, FimCalendarSystem.hijri],
@@ -51,7 +55,8 @@ const countryThemeProfiles = <String, CountryThemeProfile>{
   ),
   'IN': CountryThemeProfile(
     code: 'IN', countryName: 'India', localName: 'भारत',
-    accent: Color(0xFFE06B22), wash: Color(0xFFFFEEE2), pattern: 'rangoli',
+    accent: Color(0xFFFF9933), secondary: Color(0xFF138808),
+    wash: Color(0xFFFFEEE2), pattern: 'rangoli',
     motif: Icons.local_fire_department_outlined,
     defaultCalendar: FimCalendarSystem.gregorian,
     calendars: [FimCalendarSystem.gregorian, FimCalendarSystem.hijri],
@@ -60,7 +65,8 @@ const countryThemeProfiles = <String, CountryThemeProfile>{
   ),
   'PK': CountryThemeProfile(
     code: 'PK', countryName: 'Pakistan', localName: 'پاکستان',
-    accent: Color(0xFF16825B), wash: Color(0xFFE4F5EE), pattern: 'jaali',
+    accent: Color(0xFF01411C), secondary: Color(0xFFFFFFFF),
+    wash: Color(0xFFE4F5EE), pattern: 'jaali',
     motif: Icons.change_history_rounded,
     defaultCalendar: FimCalendarSystem.hijri,
     calendars: [FimCalendarSystem.gregorian, FimCalendarSystem.hijri],

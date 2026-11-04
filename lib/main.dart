@@ -1493,8 +1493,8 @@ ThemeData _buildAppTheme(Brightness brightness, CountryThemeProfile profile) {
     brightness: brightness,
     primary: isDark ? Color.lerp(profile.accent, Colors.white, .18)! : profile.accent,
     onPrimary: AppPalette.flagWhite,
-    secondary: profile.accent,
-    onSecondary: AppPalette.flagWhite,
+    secondary: profile.secondary,
+    onSecondary: profile.code == 'PK' ? AppPalette.ink : AppPalette.flagWhite,
     error: AppPalette.flagRed,
     onError: AppPalette.flagWhite,
     surface: isDark ? const Color(0xFF0B1242) : AppPalette.surface,
@@ -1816,7 +1816,7 @@ class _CivicBackdropPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final softWash = Paint()
-      ..color = Colors.white.withValues(alpha: isDark ? 0.055 : 0.46);
+      ..color = profile.wash.withValues(alpha: isDark ? 0.12 : 0.68);
     final blueWash = Paint()
       ..color = Colors.black.withValues(alpha: isDark ? 0.18 : 0.025);
     final rule = Paint()
@@ -13014,12 +13014,19 @@ class _CalendarFeatureCard extends StatelessWidget {
 }
 
 class HolidayEntry {
-  const HolidayEntry(this.month, this.day, this.name, this.detail);
+  const HolidayEntry(
+    this.month,
+    this.day,
+    this.name,
+    this.detail, {
+    this.countryCode = 'MY',
+  });
 
   final int month;
   final int day;
   final String name;
   final String detail;
+  final String countryCode;
 }
 
 class CalendarMonthTheme {
@@ -13139,6 +13146,49 @@ const calendarMonthThemes = <CalendarMonthTheme>[
   ),
 ];
 
+List<CalendarMonthTheme> calendarThemesForCountry(String code) {
+  if (code.toUpperCase() == 'MY') return calendarMonthThemes;
+  final profile = countryThemeFor(code);
+  final labels = switch (code.toUpperCase()) {
+    'BD' => <String>[
+        'Language and identity', 'Spring colours', 'Ramadan nights',
+        'Pohela Boishakh', 'Monsoon rivers', 'Eid traditions',
+        'Green delta', 'Rain-fed fields', 'Harvest stories',
+        'Autumn alpana', 'Victory memories', 'Winter community',
+      ],
+    'IN' => <String>[
+        'Republic colours', 'Spring rangoli', 'Holi traditions',
+        'New season rituals', 'Summer journeys', 'Monsoon landscapes',
+        'Independence stories', 'Heritage routes', 'Harvest traditions',
+        'Festival lights', 'Diwali colours', 'Winter community',
+      ],
+    'PK' => <String>[
+        'Winter heritage', 'Kashmir colours', 'Pakistan Day',
+        'Spring jaali', 'Eid traditions', 'Green landscapes',
+        'Monsoon routes', 'Independence colours', 'Heritage craft',
+        'Autumn gatherings', 'Iqbal memories', 'Winter community',
+      ],
+    _ => List<String>.filled(12, 'Country-inspired FIM'),
+  };
+  final colors = <Color>[
+    profile.accent,
+    profile.secondary,
+    Color.lerp(profile.accent, profile.secondary, .35)!,
+    Color.lerp(profile.accent, Colors.white, .2)!,
+  ];
+  return List<CalendarMonthTheme>.generate(12, (index) {
+    final primary = colors[index % colors.length];
+    return CalendarMonthTheme(
+      state: labels[index],
+      motif: '${profile.countryName} cultural calendar theme',
+      icon: profile.motif,
+      primary: primary,
+      wash: Color.lerp(primary, Colors.white, .88)!,
+      backgroundAsset: 'assets/images/culture_batik_texture.jpg',
+    );
+  });
+}
+
 const holidays2026 = <HolidayEntry>[
   HolidayEntry(
     2,
@@ -13200,6 +13250,53 @@ const holidays2026 = <HolidayEntry>[
   HolidayEntry(12, 25, 'Christmas Day', 'Public holiday.'),
 ];
 
+const holidaysBangladesh2026 = <HolidayEntry>[
+  HolidayEntry(2, 21, 'Shaheed Day / International Mother Language Day', 'National public holiday.', countryCode: 'BD'),
+  HolidayEntry(3, 17, 'Shab-e-Qadr', 'Religious holiday; confirm the official government notice.', countryCode: 'BD'),
+  HolidayEntry(3, 20, 'Eid-ul-Fitr holiday', 'Date and holiday duration may follow the official moon-sighting notice.', countryCode: 'BD'),
+  HolidayEntry(3, 26, 'Independence Day', 'National public holiday.', countryCode: 'BD'),
+  HolidayEntry(4, 14, 'Pohela Boishakh', 'Bangla New Year and national cultural observance.', countryCode: 'BD'),
+  HolidayEntry(5, 1, 'May Day', 'National public holiday.', countryCode: 'BD'),
+  HolidayEntry(5, 27, 'Eid-ul-Adha holiday', 'Date and holiday duration may follow the official moon-sighting notice.', countryCode: 'BD'),
+  HolidayEntry(7, 26, 'Ashura', 'Religious holiday; confirm the official government notice.', countryCode: 'BD'),
+  HolidayEntry(8, 26, 'Eid-e-Milad-un-Nabi', 'Religious holiday; confirm the official government notice.', countryCode: 'BD'),
+  HolidayEntry(12, 16, 'Victory Day', 'National public holiday.', countryCode: 'BD'),
+  HolidayEntry(12, 25, 'Christmas Day', 'Public holiday.', countryCode: 'BD'),
+];
+
+const holidaysIndia2026 = <HolidayEntry>[
+  HolidayEntry(1, 26, 'Republic Day', 'National public holiday.', countryCode: 'IN'),
+  HolidayEntry(3, 4, 'Holi', 'Festival date; state and employer observances may differ.', countryCode: 'IN'),
+  HolidayEntry(3, 20, 'Eid al-Fitr', 'Date may follow the official moon-sighting notice.', countryCode: 'IN'),
+  HolidayEntry(8, 15, 'Independence Day', 'National public holiday.', countryCode: 'IN'),
+  HolidayEntry(10, 2, 'Gandhi Jayanti', 'National public holiday.', countryCode: 'IN'),
+  HolidayEntry(11, 8, 'Diwali', 'Festival date; state and employer observances may differ.', countryCode: 'IN'),
+  HolidayEntry(12, 25, 'Christmas Day', 'Public holiday.', countryCode: 'IN'),
+];
+
+const holidaysPakistan2026 = <HolidayEntry>[
+  HolidayEntry(2, 5, 'Kashmir Day', 'National public holiday.', countryCode: 'PK'),
+  HolidayEntry(3, 23, 'Pakistan Day', 'National public holiday.', countryCode: 'PK'),
+  HolidayEntry(3, 20, 'Eid-ul-Fitr holiday', 'Date and holiday duration may follow the official moon-sighting notice.', countryCode: 'PK'),
+  HolidayEntry(5, 27, 'Eid-ul-Azha holiday', 'Date and holiday duration may follow the official moon-sighting notice.', countryCode: 'PK'),
+  HolidayEntry(8, 14, 'Independence Day', 'National public holiday.', countryCode: 'PK'),
+  HolidayEntry(11, 9, 'Iqbal Day', 'National public holiday.', countryCode: 'PK'),
+  HolidayEntry(12, 25, 'Quaid-e-Azam Day / Christmas Day', 'Public holiday.', countryCode: 'PK'),
+];
+
+List<HolidayEntry> holidaysForCountry(String code) {
+  switch (code.toUpperCase()) {
+    case 'BD':
+      return holidaysBangladesh2026;
+    case 'IN':
+      return holidaysIndia2026;
+    case 'PK':
+      return holidaysPakistan2026;
+    default:
+      return holidays2026;
+  }
+}
+
 class HolidayCalendarPage extends StatefulWidget {
   const HolidayCalendarPage({super.key, required this.language});
 
@@ -13220,6 +13317,9 @@ class _HolidayCalendarPageState extends State<HolidayCalendarPage> {
     final selectedCalendar = profile.calendars.contains(activeCalendarSystem.value)
         ? activeCalendarSystem.value
         : profile.defaultCalendar;
+    final countryCode = activeWorkerCountry.value?.code ?? 'MY';
+    final holidays = holidaysForCountry(countryCode);
+    final monthThemes = calendarThemesForCountry(countryCode);
     final today = DateTime.now();
     return Directionality(
       textDirection: _copy.direction,
@@ -13312,9 +13412,9 @@ class _HolidayCalendarPageState extends State<HolidayCalendarPage> {
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Red dates are federal or nationwide holiday references. State holidays and replacement days can differ, so confirm leave arrangements with your employer or an official authority.',
-              style: TextStyle(
+            Text(
+              '${profile.countryName} dates are national or reference holidays. State, employer, and official moon-sighting arrangements can differ; confirm before planning leave.',
+              style: const TextStyle(
                 color: Color(0xFF657773),
                 fontSize: 12,
                 height: 1.4,
@@ -13324,7 +13424,8 @@ class _HolidayCalendarPageState extends State<HolidayCalendarPage> {
             for (var month = 1; month <= 12; month++) ...[
               _MonthCalendar(
                 month: month,
-                theme: calendarMonthThemes[month - 1],
+                theme: monthThemes[month - 1],
+                holidays: holidays,
               ),
               const SizedBox(height: 14),
             ],
@@ -13338,7 +13439,7 @@ class _HolidayCalendarPageState extends State<HolidayCalendarPage> {
               ),
             ),
             const SizedBox(height: 8),
-            for (final holiday in holidays2026)
+            for (final holiday in holidays)
               _HolidayDetailTile(holiday: holiday),
           ],
         ),
@@ -13348,10 +13449,15 @@ class _HolidayCalendarPageState extends State<HolidayCalendarPage> {
 }
 
 class _MonthCalendar extends StatelessWidget {
-  const _MonthCalendar({required this.month, required this.theme});
+  const _MonthCalendar({
+    required this.month,
+    required this.theme,
+    required this.holidays,
+  });
 
   final int month;
   final CalendarMonthTheme theme;
+  final List<HolidayEntry> holidays;
 
   @override
   Widget build(BuildContext context) {
@@ -13373,7 +13479,7 @@ class _MonthCalendar extends StatelessWidget {
     final firstWeekday = DateTime(2026, month, 1).weekday % 7;
     final daysInMonth = DateTime(2026, month + 1, 0).day;
     final holidayDays = <int>{
-      for (final item in holidays2026.where((item) => item.month == month))
+      for (final item in holidays.where((item) => item.month == month))
         item.day,
     };
     return Container(

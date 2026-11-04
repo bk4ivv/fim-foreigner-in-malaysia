@@ -39,10 +39,16 @@ AppLanguage? _appLanguageForLabelForTest(String label) {
 
 void main() {
   test('provides country-inspired themes and calendar layers', () {
-    expect(countryThemeFor('BD').accent, const Color(0xFF007A53));
+    expect(countryThemeFor('BD').accent, const Color(0xFF006A4E));
+    expect(countryThemeFor('BD').secondary, const Color(0xFFF42A41));
+    expect(countryThemeFor('MY').secondary, const Color(0xFFCC0001));
     expect(countryThemeFor('IN').pattern, 'rangoli');
     expect(countryThemeFor('PK').defaultCalendar, FimCalendarSystem.hijri);
     expect(countryThemeFor('MY').utilityLine, contains('Malaysia'));
+    expect(holidaysForCountry('BD').any((holiday) => holiday.name == 'Pohela Boishakh'), isTrue);
+    expect(holidaysForCountry('IN').any((holiday) => holiday.name == 'Republic Day'), isTrue);
+    expect(holidaysForCountry('PK').any((holiday) => holiday.name == 'Pakistan Day'), isTrue);
+    expect(holidaysForCountry('MY').any((holiday) => holiday.name == 'Malaysia Day'), isTrue);
     expect(
       calendarShortDate(DateTime(2026, 11, 4), FimCalendarSystem.gregorian),
       '04/11/2026',
