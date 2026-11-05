@@ -23,3 +23,7 @@
 - [x] Keep FIM-T as the in-app logo and FIM-TM as the launcher identity.
 - [x] Bump test version to 2.21.0 (build 52).
 - [ ] Run Flutter pub get, analyzer, tests, and APK build in GitHub Actions.
+
+
+## v2.21.1 Overflow Fix
+The drawer menu cards and premium Home priority cards now use explicit responsive heights instead of restrictive aspect ratios. This prevents Bangla and other large-script subtitles from overflowing at the bottom on smaller screens and with increased system text size. Test version is 2.21.1, build 53.

@@ -4355,7 +4355,7 @@ class _FimMenuDrawer extends StatelessWidget {
                           crossAxisCount: 2,
                           crossAxisSpacing: 10,
                           mainAxisSpacing: 10,
-                          childAspectRatio: 1.55,
+                          mainAxisExtent: 158,
                         ),
                     itemBuilder: (context, index) {
                       final item = items[index];
@@ -4634,7 +4634,7 @@ class _WorkerDashboardTab extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 1.35,
+          mainAxisExtent: 178,
           children: [
             _PremiumPriorityCard(
               icon: Icons.verified_outlined,
