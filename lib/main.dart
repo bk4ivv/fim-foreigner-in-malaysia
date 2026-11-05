@@ -2931,10 +2931,11 @@ class FirstUseGuidePage extends StatelessWidget {
 
   void _continue(BuildContext context) {
     activeWorkerLanguage.value = language;
-    if (country != null) {
-      activeWorkerCountry.value = country;
-      activeCalendarSystem.value = countryThemeFor(country.code).defaultCalendar;
-      unawaited(_saveWorkerSelection(country!, language));
+    final selectedCountry = country;
+    if (selectedCountry != null) {
+      activeWorkerCountry.value = selectedCountry;
+      activeCalendarSystem.value = countryThemeFor(selectedCountry.code).defaultCalendar;
+      unawaited(_saveWorkerSelection(selectedCountry, language));
     }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
