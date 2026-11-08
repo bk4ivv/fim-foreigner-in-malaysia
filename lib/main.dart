@@ -12768,7 +12768,7 @@ class _ContactButton extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_outward_rounded,
               size: 18,
               color: scheme.primary,
