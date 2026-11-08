@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:expat_status_checker/main.dart';
 import 'package:expat_status_checker/community_email_page.dart';
 import 'package:expat_status_checker/expat_experience_map.dart';
+import 'package:expat_status_checker/fim_jobs_groups_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -113,6 +114,22 @@ void main() {
     expect(find.text('Tickets & events'), findsWidgets);
     expect(find.text('Daily tools'), findsWidgets);
     expect(find.text('Games'), findsWidgets);
+    expect(find.text('FIM Jobs & Groups'), findsWidgets);
+  });
+
+  testWidgets('renders FIM Jobs groups, official links and safety reminder', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: FimJobsGroupsPage(isBangla: false)),
+    );
+
+    expect(find.text('FIM Jobs & Groups'), findsOneWidget);
+    expect(find.text('FIM-JOBS🇲🇾'), findsOneWidget);
+    expect(find.text('FIM-USERS♾️'), findsOneWidget);
+    expect(find.text('Part Time Jobs Malaysia'), findsOneWidget);
+    expect(find.text('MYFutureJobs'), findsOneWidget);
+    expect(find.text('Job safety reminder'), findsOneWidget);
   });
   testWidgets('renders the Experience Map safety and sharing controls', (
     tester,

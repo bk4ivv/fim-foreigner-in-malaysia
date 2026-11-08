@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'expat_experience_map.dart';
+import 'fim_jobs_groups_page.dart';
 import 'fim_help_assistant.dart';
 import 'malaysia_ticket_portal.dart';
 import 'money_manager_page.dart';
@@ -3593,6 +3594,16 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
     );
   }
 
+  void _openJobsGroups() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => FimJobsGroupsPage(
+          isBangla: widget.language == AppLanguage.bangla,
+        ),
+      ),
+    );
+  }
+
   void _openTool(ToolId tool) {
     switch (tool) {
       case ToolId.translate:
@@ -3712,6 +3723,7 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
             onTools: _openToolsPage,
             onMoneyManager: _openMoneyManager,
             onGames: _showGamesComingSoon,
+            onJobsGroups: _openJobsGroups,
             onLearn: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => _LearningTab(
@@ -4126,6 +4138,7 @@ class _FimMenuDrawer extends StatelessWidget {
     required this.onTools,
     required this.onMoneyManager,
     required this.onGames,
+    required this.onJobsGroups,
     required this.onLearn,
     required this.onHelp,
     required this.onManual,
@@ -4138,6 +4151,7 @@ class _FimMenuDrawer extends StatelessWidget {
   final VoidCallback onTools;
   final VoidCallback onMoneyManager;
   final VoidCallback onGames;
+  final VoidCallback onJobsGroups;
   final VoidCallback onLearn;
   final VoidCallback onHelp;
   final VoidCallback onManual;
@@ -4235,6 +4249,17 @@ class _FimMenuDrawer extends StatelessWidget {
         icon: Icons.sports_esports_outlined,
         color: const Color(0xFF8A4C99),
         action: onGames,
+      ),
+      _FimMenuItem(
+        title: language == AppLanguage.bangla
+            ? 'FIM Jobs ও Groups'
+            : 'FIM Jobs & Groups',
+        subtitle: language == AppLanguage.bangla
+            ? 'চাকরি, trusted groups ও official links'
+            : 'Jobs, trusted groups and official links',
+        icon: Icons.work_history_outlined,
+        color: const Color(0xFF1B5E20),
+        action: onJobsGroups,
       ),
     ];
     return Drawer(
