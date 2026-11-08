@@ -12,7 +12,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-import 'community_email_page.dart';
 import 'expat_experience_map.dart';
 import 'fim_help_assistant.dart';
 import 'malaysia_ticket_portal.dart';
@@ -106,8 +105,7 @@ abstract final class AppPalette {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // The core app is intentionally offline-first. Optional community/backend
-  // code is not part of the active navigation, so never block the utility UI
+  // The core app is intentionally offline-first, so never block the utility UI
   // on a network session during startup.
   runApp(const ForeignWorkerMalaysiaApp());
 }
@@ -3541,14 +3539,6 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
             ),
           ),
         );
-      case 3:
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => CommunityEmailPage(
-              isBangla: widget.language == AppLanguage.bangla,
-            ),
-          ),
-        );
     }
   }
 
@@ -3676,33 +3666,6 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
   }
 
   String _navigationLabel(int index) {
-    if (index == 3) {
-      const communityLabels = <AppLanguage, String>{
-        AppLanguage.english: 'Community',
-        AppLanguage.bangla: 'কমিউনিটি',
-        AppLanguage.malay: 'Komuniti',
-        AppLanguage.indonesian: 'Komunitas',
-        AppLanguage.tamil: 'சமூகம்',
-        AppLanguage.urdu: 'کمیونٹی',
-        AppLanguage.hindi: 'समुदाय',
-        AppLanguage.nepali: 'समुदाय',
-        AppLanguage.burmese: 'အသိုင်းအဝိုင်း',
-        AppLanguage.thai: 'ชุมชน',
-        AppLanguage.khmer: 'សហគមន៍',
-        AppLanguage.filipino: 'Komunidad',
-        AppLanguage.chinese: '社区',
-        AppLanguage.vietnamese: 'Cộng đồng',
-        AppLanguage.sinhala: 'ප්‍රජාව',
-        AppLanguage.korean: '커뮤니티',
-        AppLanguage.japanese: 'コミュニティ',
-        AppLanguage.german: 'Community',
-        AppLanguage.french: 'Communauté',
-        AppLanguage.spanish: 'Comunidad',
-        AppLanguage.arabic: 'المجتمع',
-        AppLanguage.russian: 'Сообщество',
-      };
-      return communityLabels[widget.language] ?? 'Community';
-    }
     const labels = <AppLanguage, List<String>>{
       AppLanguage.english: ['Home', 'Learn', 'Help & info'],
       AppLanguage.bangla: ['হোম', 'শেখা', 'সহায়তা ও তথ্য'],
@@ -3777,13 +3740,6 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
                       builder: (_) => CreatorProfilePage(copy: _copy),
                     ),
                   ),
-                ),
-              ),
-            ),
-            onCommunity: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => CommunityEmailPage(
-                  isBangla: widget.language == AppLanguage.bangla,
                 ),
               ),
             ),
@@ -3876,10 +3832,6 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
               NavigationDestination(
                 icon: const Icon(Icons.support_agent_outlined),
                 label: _navigationLabel(2),
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.forum_outlined),
-                label: _navigationLabel(3),
               ),
             ],
           ),
@@ -4176,7 +4128,6 @@ class _FimMenuDrawer extends StatelessWidget {
     required this.onGames,
     required this.onLearn,
     required this.onHelp,
-    required this.onCommunity,
     required this.onManual,
     required this.onSettings,
   });
@@ -4189,7 +4140,6 @@ class _FimMenuDrawer extends StatelessWidget {
   final VoidCallback onGames;
   final VoidCallback onLearn;
   final VoidCallback onHelp;
-  final VoidCallback onCommunity;
   final VoidCallback onManual;
   final VoidCallback onSettings;
 
@@ -4249,13 +4199,6 @@ class _FimMenuDrawer extends StatelessWidget {
         icon: Icons.support_agent_outlined,
         color: const Color(0xFF7B4B9B),
         action: onHelp,
-      ),
-      _FimMenuItem(
-        title: language == AppLanguage.bangla ? 'কমিউনিটি' : 'Community',
-        subtitle: 'Posts, reports and useful updates',
-        icon: Icons.forum_outlined,
-        color: const Color(0xFFB66B1C),
-        action: onCommunity,
       ),
       _FimMenuItem(
         title: language == AppLanguage.bangla
@@ -4376,7 +4319,7 @@ class _FimMenuDrawer extends StatelessWidget {
                           crossAxisCount: 2,
                           crossAxisSpacing: 10,
                           mainAxisSpacing: 10,
-                          childAspectRatio: 1.55,
+                          childAspectRatio: 1.28,
                         ),
                     itemBuilder: (context, index) {
                       final item = items[index];
@@ -4439,18 +4382,18 @@ class _FimMenuCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(24),
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(11, 10, 11, 9),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(item.icon, color: item.color, size: 27),
-            const SizedBox(height: 7),
+            const SizedBox(height: 5),
             Text(
               item.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5),
             ),
             const SizedBox(height: 2),
             Text(
@@ -4460,8 +4403,8 @@ class _FimMenuCard extends StatelessWidget {
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface
                     .withValues(alpha: .62),
-                fontSize: 9.5,
-                height: 1.2,
+                fontSize: 9.2,
+                height: 1.15,
               ),
             ),
           ],
@@ -7927,7 +7870,7 @@ class _CreatorCreditPanel extends StatelessWidget {
                         Text(
                           isBangla
                               ? 'ফ্রি ব্যবহার, তথ্যের গোপনীয়তা ও কমিউনিটি নিরাপত্তার তথ্য দেখুন'
-                              : 'Read about free use, data privacy, and Community safety',
+                              : 'Read about free use, data privacy, and account safety',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -8487,15 +8430,17 @@ class CreatorProfilePage extends StatelessWidget {
             Text(
               _creatorDisplayNameFor(copy),
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: const Color(0xFF163A38),
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               '@bk4ivv · Kuala Lumpur, Malaysia',
               style: TextStyle(
-                color: Color(0xFF57716B),
+                color: Theme.of(context).colorScheme.onSurface.withValues(
+                  alpha: 0.72,
+                ),
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
               ),
@@ -8628,8 +8573,8 @@ class CreatorProfilePage extends StatelessWidget {
               copy.languageName == 'বাংলা'
                   ? 'IBEDGE-এর creator'
                   : 'Creator of IBEDGE',
-              style: const TextStyle(
-                color: Color(0xFF163A38),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 17,
                 fontWeight: FontWeight.w900,
               ),
@@ -8676,8 +8621,8 @@ class CreatorProfilePage extends StatelessWidget {
             const SizedBox(height: 18),
             Text(
               profile.contactTitle,
-              style: const TextStyle(
-                color: Color(0xFF163A38),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
               ),
@@ -8908,7 +8853,7 @@ class AppInformationPage extends StatelessWidget {
                 'কর্মী টুলের জন্য অ্যাকাউন্ট লাগে না',
               ),
               body: _text(
-                'Visa, FOMEMA, help, learning, and tools stay free without an account. A verified email account is optional for Community participation only.',
+                'Visa, FOMEMA, help, learning, and tools stay free without an account. A verified email account is optional for future personal features only.',
                 'ভিসা, FOMEMA, সহায়তা, শেখা ও টুল অ্যাকাউন্ট ছাড়াই ফ্রি। শুধু কমিউনিটিতে অংশ নেওয়ার জন্য যাচাইকৃত ইমেইল অ্যাকাউন্ট ঐচ্ছিক।',
               ),
             ),
@@ -12707,15 +12652,16 @@ class _ProfileSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppPalette.surface,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppPalette.outline),
+        border: Border.all(color: scheme.onSurface.withValues(alpha: 0.14)),
         boxShadow: [
           BoxShadow(
-            color: AppPalette.ink.withValues(alpha: 0.06),
+            color: Colors.black.withValues(alpha: 0.10),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -12729,10 +12675,10 @@ class _ProfileSection extends StatelessWidget {
             height: 38,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppPalette.evergreen.withValues(alpha: 0.10),
+              color: scheme.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(13),
             ),
-            child: Icon(icon, color: AppPalette.evergreen, size: 20),
+            child: Icon(icon, color: scheme.primary, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -12741,8 +12687,8 @@ class _ProfileSection extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: AppPalette.ink,
+                  style: TextStyle(
+                    color: scheme.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
                   ),
@@ -12750,8 +12696,8 @@ class _ProfileSection extends StatelessWidget {
                 const SizedBox(height: 5),
                 Text(
                   body,
-                  style: const TextStyle(
-                    color: AppPalette.muted,
+                  style: TextStyle(
+                    color: scheme.onSurface.withValues(alpha: 0.72),
                     fontSize: 12,
                     height: 1.45,
                   ),
@@ -12780,6 +12726,7 @@ class _ContactButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return CivicPressable(
       radius: 18,
       onTap: onPressed,
@@ -12792,10 +12739,10 @@ class _ContactButton extends StatelessWidget {
               height: 38,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppPalette.evergreen.withValues(alpha: 0.10),
+                color: scheme.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(13),
               ),
-              child: Icon(icon, color: AppPalette.evergreen, size: 20),
+              child: Icon(icon, color: scheme.primary, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -12804,8 +12751,8 @@ class _ContactButton extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: AppPalette.ink,
+                    style: TextStyle(
+                      color: scheme.onSurface,
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
                     ),
@@ -12813,8 +12760,8 @@ class _ContactButton extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      color: AppPalette.muted,
+                    style: TextStyle(
+                      color: scheme.onSurface.withValues(alpha: 0.72),
                       fontSize: 11,
                     ),
                   ),
@@ -12824,7 +12771,7 @@ class _ContactButton extends StatelessWidget {
             const Icon(
               Icons.arrow_outward_rounded,
               size: 18,
-              color: AppPalette.evergreen,
+              color: scheme.primary,
             ),
           ],
         ),
