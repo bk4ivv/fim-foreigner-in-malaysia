@@ -1,0 +1,76 @@
+name: Build FIM Play release artifacts
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.2'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify Flutter/Android toolchain
+        run: |
+          flutter --version
+          flutter doctor -v
+
+      - name: Restore upload keystore from GitHub secret
+        env:
+          FIM_UPLOAD_KEYSTORE_BASE64: ${{ secrets.FIM_UPLOAD_KEYSTORE_BASE64 }}
+          FIM_KEY_PROPERTIES: ${{ secrets.FIM_KEY_PROPERTIES }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${FIM_UPLOAD_KEYSTORE_BASE64}" || -z "${FIM_KEY_PROPERTIES}" ]]; then
+            echo "Missing FIM_UPLOAD_KEYSTORE_BASE64 or FIM_KEY_PROPERTIES repository secrets."
+            echo "Add the private upload keystore and key.properties as GitHub Actions secrets; never commit either file."
+            exit 1
+          fi
+          printf '%s' "$FIM_UPLOAD_KEYSTORE_BASE64" | base64 --decode > android/fim-upload-keystore.jks
+          printf '%s\n' "$FIM_KEY_PROPERTIES" > android/key.properties
+
+      - name: Build signed Android App Bundle
+        run: flutter build appbundle --release
+
+      - name: Build signed universal APK
+        run: flutter build apk --release
+
+      - name: Read app version
+        id: app_version
+        shell: bash
+        run: |
+          version_name=$(sed -n 's/^version: \([^+]*\).*/\1/p' pubspec.yaml)
+          build_number=$(sed -n 's/^version: [^+]*+\(.*\)/\1/p' pubspec.yaml)
+          echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
+          echo "build_number=$build_number" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare release filenames and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-artifacts
+          cp build/app/outputs/bundle/release/app-release.aab "release-artifacts/FIM-Foreigner-in-Malaysia-v${{ steps.app_version.outputs.version_name }}-build${{ steps.app_version.outputs.build_number }}.aab"
+          cp build/app/outputs/flutter-apk/app-release.apk "release-artifacts/FIM-Foreigner-in-Malaysia-v${{ steps.app_version.outputs.version_name }}-build${{ steps.app_version.outputs.build_number }}.apk"
+          sha256sum release-artifacts/* > release-artifacts/SHA256SUMS.txt
+          rm -f android/key.properties android/fim-upload-keystore.jks
+
+      - name: Upload signed release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: FIM-Play-release-v${{ steps.app_version.outputs.version_name }}-build${{ steps.app_version.outputs.build_number }}
+          path: release-artifacts/
+          if-no-files-found: error

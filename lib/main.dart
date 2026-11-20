@@ -1592,12 +1592,16 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
     vsync: this,
     duration: const Duration(seconds: 18),
   )..repeat(reverse: true);
+  Timer? _initialWeatherTimer;
   Timer? _weatherTimer;
 
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(milliseconds: 900), _refreshCivicWeather);
+    _initialWeatherTimer = Timer(
+      const Duration(milliseconds: 900),
+      _refreshCivicWeather,
+    );
     _weatherTimer = Timer.periodic(
       const Duration(minutes: 15),
       (_) => _refreshCivicWeather(),
@@ -1606,6 +1610,7 @@ class _CivicAppBackdropState extends State<CivicAppBackdrop>
 
   @override
   void dispose() {
+    _initialWeatherTimer?.cancel();
     _weatherTimer?.cancel();
     _controller.dispose();
     super.dispose();
@@ -3187,7 +3192,7 @@ class FIMWelcomePage extends StatelessWidget {
   }
 }
 
-// Reference-informed utility shell: compact worker actions, four clear destinations,
+// Reference-informed utility shell: compact worker actions, three clear destinations,
 // monochrome surfaces, and retained access to every established service and country hub.
 class WorkerLaunchPage extends StatefulWidget {
   const WorkerLaunchPage({super.key});
@@ -3766,6 +3771,7 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
           ),
           appBar: _AppBar(
             title: _appTitle,
+            onOpenMenu: () => _scaffoldKey.currentState?.openDrawer(),
             onOpenManual: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => UserManualPage(

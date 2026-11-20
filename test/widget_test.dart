@@ -83,7 +83,7 @@ void main() {
     },
   );
 
-  testWidgets('provides Home, Learn, Help, and Community destinations', (
+  testWidgets('provides Home, Learn, and Help destinations without Community', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -97,7 +97,8 @@ void main() {
     expect(find.text('Visa status'), findsOneWidget);
     expect(find.text('Cinema tickets'), findsOneWidget);
     expect(find.text('Money manager'), findsOneWidget);
-    expect(find.text('Community'), findsOneWidget);
+    expect(find.text('Help & info'), findsOneWidget);
+    expect(find.text('Community'), findsNothing);
   });
   testWidgets('opens the FIM menu with the Experience Map shortcut', (
     tester,
@@ -128,6 +129,11 @@ void main() {
     expect(find.text('FIM-JOBS🇲🇾'), findsOneWidget);
     expect(find.text('FIM-USERS♾️'), findsOneWidget);
     expect(find.text('Part Time Jobs Malaysia'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('MYFutureJobs'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('MYFutureJobs'), findsOneWidget);
     expect(find.text('Job safety reminder'), findsOneWidget);
   });
