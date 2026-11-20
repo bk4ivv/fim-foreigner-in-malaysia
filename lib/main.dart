@@ -17,9 +17,12 @@ import 'fim_jobs_groups_page.dart';
 import 'fim_help_assistant.dart';
 import 'malaysia_ticket_portal.dart';
 import 'money_manager_page.dart';
+import 'prayer_alarm_service.dart';
 import 'user_manual_page.dart';
 
 enum CivicWeather { clear, hot, rain, storm }
+
+enum UserReligion { notSet, islam, christianity, hinduism, buddhism, other }
 
 final ValueNotifier<CivicWeather> appWeather = ValueNotifier<CivicWeather>(
   CivicWeather.clear,
@@ -1116,20 +1119,27 @@ final ValueNotifier<AppLanguage?> activeWorkerLanguage =
     ValueNotifier<AppLanguage?>(null);
 final ValueNotifier<CountryOption?> activeWorkerCountry =
     ValueNotifier<CountryOption?>(null);
+final ValueNotifier<UserReligion> activeWorkerReligion =
+    ValueNotifier<UserReligion>(UserReligion.notSet);
 
 const _savedCountryKey = 'fim.selected_country_code';
 const _savedLanguageKey = 'fim.selected_language_index';
+const _savedReligionKey = 'fim.selected_religion';
+const _savedPrayerAlarmsKey = 'fim.prayer_alarms_enabled';
+const _savedPrayerTimePrefix = 'fim.prayer_time.';
 
 Future<void> _saveWorkerSelection(
   CountryOption country,
   AppLanguage language,
+  UserReligion religion = UserReligion.notSet,
 ) async {
   final preferences = await SharedPreferences.getInstance();
   await preferences.setString(_savedCountryKey, country.code.toUpperCase());
   await preferences.setInt(_savedLanguageKey, language.index);
+  await preferences.setString(_savedReligionKey, religion.name);
 }
 
-Future<({CountryOption country, AppLanguage language})?>
+Future<({CountryOption country, AppLanguage language, UserReligion religion})?>
 _loadWorkerSelection() async {
   final preferences = await SharedPreferences.getInstance();
   final countryCode = preferences.getString(_savedCountryKey);
@@ -1149,7 +1159,16 @@ _loadWorkerSelection() async {
     }
   }
   if (country == null) return null;
-  return (country: country, language: AppLanguage.values[languageIndex]);
+  final religionName = preferences.getString(_savedReligionKey);
+  final religion = UserReligion.values.firstWhere(
+    (item) => item.name == religionName,
+    orElse: () => UserReligion.notSet,
+  );
+  return (
+    country: country,
+    language: AppLanguage.values[languageIndex],
+    religion: religion,
+  );
 }
 
 class ForeignWorkerMalaysiaApp extends StatelessWidget {
@@ -2480,6 +2499,7 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
     }
     activeWorkerCountry.value = country;
     activeWorkerLanguage.value = language;
+    activeWorkerReligion.value = UserReligion.notSet;
     unawaited(_saveWorkerSelection(country, language));
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
@@ -3246,6 +3266,7 @@ class _WorkerLaunchPageState extends State<WorkerLaunchPage>
     }
     activeWorkerCountry.value = saved.country;
     activeWorkerLanguage.value = saved.language;
+    activeWorkerReligion.value = saved.religion;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (_) => WorkerUtilityShellPage(language: saved.language),
@@ -3795,6 +3816,7 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
             onOpenTools: _openToolsPage,
             onOpenMoneyManager: _openMoneyManager,
             onOpenPrayerTimes: _openPrayerTimes,
+            showPrayerTimes: activeWorkerReligion.value == UserReligion.islam,
             onOpenLearn: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => _LearningTab(
@@ -3872,11 +3894,162 @@ class _SettingsPageState extends State<SettingsPage> {
   late final Future<List<CountryOption>> _countries = _loadCountryOptions();
   CountryOption? _country;
   late AppLanguage _language = widget.currentLanguage;
-
+  UserReligion _religion = activeWorkerReligion.value;
+  bool _prayerAlarmsEnabled = false;
+  final Map<String, TimeOfDay> _prayerTimes = {
+    'Fajr': const TimeOfDay(hour: 5, minute: 30),
+    'Dhuhr': const TimeOfDay(hour: 13, minute: 15),
+    'Asr': const TimeOfDay(hour: 16, minute: 45),
+    'Maghrib': const TimeOfDay(hour: 19, minute: 20),
+    'Isha': const TimeOfDay(hour: 20, minute: 35),
+  };
   @override
   void initState() {
     super.initState();
     _country = activeWorkerCountry.value;
+    _loadPrayerPreferences();
+  }
+
+  Future<void> _loadPrayerPreferences() async {
+    final preferences = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _prayerAlarmsEnabled = preferences.getBool(_savedPrayerAlarmsKey) ?? false;
+      for (final prayer in _prayerTimes.keys) {
+        final encoded = preferences.getString('$_savedPrayerTimePrefix$prayer');
+        final parts = encoded?.split(':');
+        if (parts?.length == 2) {
+          final hour = int.tryParse(parts![0]);
+          final minute = int.tryParse(parts[1]);
+          if (hour != null && minute != null) {
+            _prayerTimes[prayer] = TimeOfDay(hour: hour, minute: minute);
+          }
+        }
+      }
+    });
+  }
+
+  String _religionLabel(UserReligion religion) {
+    if (widget.currentLanguage == AppLanguage.bangla) {
+      return switch (religion) {
+        UserReligion.notSet => 'নির্বাচন করা হয়নি',
+        UserReligion.islam => 'ইসলাম',
+        UserReligion.christianity => 'খ্রিস্টধর্ম',
+        UserReligion.hinduism => 'হিন্দুধর্ম',
+        UserReligion.buddhism => 'বৌদ্ধধর্ম',
+        UserReligion.other => 'অন্যান্য',
+      };
+    }
+    return switch (religion) {
+      UserReligion.notSet => 'Not selected',
+      UserReligion.islam => 'Islam',
+      UserReligion.christianity => 'Christianity',
+      UserReligion.hinduism => 'Hinduism',
+      UserReligion.buddhism => 'Buddhism',
+      UserReligion.other => 'Other / prefer not to say',
+    };
+  }
+
+  String _prayerBanglaName(String prayer) => switch (prayer) {
+    'Fajr' => 'ফজর',
+    'Dhuhr' => 'যোহর',
+    'Asr' => 'আসর',
+    'Maghrib' => 'মাগরিব',
+    'Isha' => 'এশা',
+    _ => prayer,
+  };
+
+  Future<void> _pickReligion() async {
+    final selected = await showModalBottomSheet<UserReligion>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.only(bottom: 20),
+          children: [
+            for (final religion in UserReligion.values)
+              ListTile(
+                leading: Icon(
+                  religion == UserReligion.islam
+                      ? Icons.mosque_outlined
+                      : Icons.public_outlined,
+                ),
+                title: Text(_religionLabel(religion)),
+                trailing: religion == _religion
+                    ? const Icon(Icons.check_rounded)
+                    : null,
+                onTap: () => Navigator.of(sheetContext).pop(religion),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || selected == null) return;
+    setState(() {
+      _religion = selected;
+      if (selected != UserReligion.islam) _prayerAlarmsEnabled = false;
+    });
+    if (selected != UserReligion.islam) {
+      await PrayerAlarmService.cancelPrayerReminders();
+    }
+  }
+
+  Future<void> _setPrayerAlarm(bool enabled) async {
+    if (enabled) {
+      final granted = await PrayerAlarmService.requestPermissions();
+      if (!granted && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.currentLanguage == AppLanguage.bangla
+                  ? 'নোটিফিকেশন অনুমতি না দিলে prayer alarm দেখানো যাবে না।'
+                  : 'Notification permission is needed for prayer reminders.',
+            ),
+          ),
+        );
+        return;
+      }
+      await _schedulePrayerAlarms();
+    } else {
+      await PrayerAlarmService.cancelPrayerReminders();
+    }
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setBool(_savedPrayerAlarmsKey, enabled);
+    if (mounted) setState(() => _prayerAlarmsEnabled = enabled);
+  }
+
+  Future<void> _schedulePrayerAlarms() async {
+    final today = DateTime.now();
+    final times = <String, DateTime>{
+      for (final entry in _prayerTimes.entries)
+        entry.key: DateTime(
+          today.year,
+          today.month,
+          today.day,
+          entry.value.hour,
+          entry.value.minute,
+        ),
+    };
+    await PrayerAlarmService.scheduleDailyPrayerReminders(
+      prayerTimes: times,
+      isBangla: widget.currentLanguage == AppLanguage.bangla,
+    );
+  }
+
+  Future<void> _pickPrayerTime(String prayer) async {
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: _prayerTimes[prayer]!,
+    );
+    if (!mounted || selected == null) return;
+    setState(() => _prayerTimes[prayer] = selected);
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(
+      '$_savedPrayerTimePrefix$prayer',
+      '${selected.hour}:${selected.minute}',
+    );
+    if (_prayerAlarmsEnabled) await _schedulePrayerAlarms();
   }
 
   Future<void> _pickCountry(List<CountryOption> countries) async {
@@ -3949,7 +4122,8 @@ class _SettingsPageState extends State<SettingsPage> {
     if (country == null) return;
     activeWorkerCountry.value = country;
     activeWorkerLanguage.value = _language;
-    await _saveWorkerSelection(country, _language);
+    activeWorkerReligion.value = _religion;
+    await _saveWorkerSelection(country, _language, _religion);
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute<void>(
@@ -4026,6 +4200,68 @@ class _SettingsPageState extends State<SettingsPage> {
                   value: appCopies[_language]!.languageName,
                   onTap: _pickLanguage,
                 ),
+                const SizedBox(height: 12),
+                _SettingsChoiceCard(
+                  icon: Icons.favorite_outline_rounded,
+                  title: bn ? 'আপনার ধর্ম' : 'Your religion',
+                  value: _religionLabel(_religion),
+                  onTap: _pickReligion,
+                ),
+                if (_religion == UserReligion.islam) ...[
+                  const SizedBox(height: 12),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.mosque_outlined),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  bn ? 'নামাজের সময় ও অ্যালার্ম' : 'Prayer times & alarms',
+                                  style: const TextStyle(fontWeight: FontWeight.w900),
+                                ),
+                              ),
+                              Switch(
+                                value: _prayerAlarmsEnabled,
+                                onChanged: _setPrayerAlarm,
+                              ),
+                            ],
+                          ),
+                          Text(
+                            bn
+                                ? 'আপনার এলাকার e-Solat সময় দেখে সময়গুলো মিলিয়ে নিন। অ্যালার্ম চালু করলে প্রতিদিন notification আসবে।'
+                                : 'Check the official e-Solat timetable for your area and adjust these times. Enabled reminders repeat daily.',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: .64),
+                              fontSize: 12,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          for (final prayer in _prayerTimes.keys)
+                            ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              leading: const Icon(Icons.access_time_rounded, size: 20),
+                              title: Text(
+                                bn ? _prayerBanglaName(prayer) : prayer,
+                                style: const TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              trailing: Text(
+                                _prayerTimes[prayer]!.format(context),
+                                style: const TextStyle(fontWeight: FontWeight.w900),
+                              ),
+                              onTap: () => _pickPrayerTime(prayer),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 ValueListenableBuilder<ThemeMode>(
                   valueListenable: appThemeMode,
@@ -4568,6 +4804,7 @@ class _WorkerDashboardTab extends StatelessWidget {
     required this.onOpenTools,
     required this.onOpenMoneyManager,
     required this.onOpenPrayerTimes,
+    required this.showPrayerTimes,
     required this.onOpenLearn,
     required this.onOpenHelp,
     required this.onOpenManual,
@@ -4586,6 +4823,7 @@ class _WorkerDashboardTab extends StatelessWidget {
   final VoidCallback onOpenTools;
   final VoidCallback onOpenMoneyManager;
   final VoidCallback onOpenPrayerTimes;
+  final bool showPrayerTimes;
   final VoidCallback onOpenLearn;
   final VoidCallback onOpenHelp;
   final VoidCallback onOpenManual;
@@ -4633,12 +4871,13 @@ class _WorkerDashboardTab extends StatelessWidget {
         color: const Color(0xFF1A73E8),
         onTap: () => onTool(ToolId.translate),
       ),
-      _V218ServiceCard(
-        title: label('Prayer times', 'নামাজের সময়'),
-        icon: Icons.mosque_outlined,
-        color: const Color(0xFF2D8A72),
-        onTap: onOpenPrayerTimes,
-      ),
+      if (showPrayerTimes)
+        _V218ServiceCard(
+          title: label('Prayer times', 'নামাজের সময়'),
+          icon: Icons.mosque_outlined,
+          color: const Color(0xFF2D8A72),
+          onTap: onOpenPrayerTimes,
+        ),
       _V218ServiceCard(
         title: label('QR scanner', 'QR স্ক্যানার'),
         icon: Icons.qr_code_scanner_rounded,
