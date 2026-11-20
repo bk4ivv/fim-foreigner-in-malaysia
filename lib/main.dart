@@ -1131,7 +1131,7 @@ const _savedPrayerTimePrefix = 'fim.prayer_time.';
 Future<void> _saveWorkerSelection(
   CountryOption country,
   AppLanguage language,
-  UserReligion religion = UserReligion.notSet,
+  [UserReligion religion = UserReligion.notSet],
 ) async {
   final preferences = await SharedPreferences.getInstance();
   await preferences.setString(_savedCountryKey, country.code.toUpperCase());
