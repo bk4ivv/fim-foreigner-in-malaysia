@@ -26,7 +26,9 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.expatstatuschecker.expat_status_checker"
-    compileSdk = flutter.compileSdkVersion
+    // flutter_local_notifications 23.x and current AndroidX require API 37.
+    // compileSdk can be newer than targetSdk without changing runtime behavior.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
