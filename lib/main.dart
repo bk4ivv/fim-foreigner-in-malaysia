@@ -1131,7 +1131,7 @@ const _savedPrayerTimePrefix = 'fim.prayer_time.';
 Future<void> _saveWorkerSelection(
   CountryOption country,
   AppLanguage language,
-  [UserReligion religion = UserReligion.notSet],
+  {UserReligion religion = UserReligion.notSet},
 ) async {
   final preferences = await SharedPreferences.getInstance();
   await preferences.setString(_savedCountryKey, country.code.toUpperCase());
@@ -4123,7 +4123,7 @@ class _SettingsPageState extends State<SettingsPage> {
     activeWorkerCountry.value = country;
     activeWorkerLanguage.value = _language;
     activeWorkerReligion.value = _religion;
-    await _saveWorkerSelection(country, _language, _religion);
+    await _saveWorkerSelection(country, _language, religion: _religion);
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute<void>(
