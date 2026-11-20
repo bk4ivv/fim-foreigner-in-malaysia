@@ -29,7 +29,7 @@ class PrayerAlarmService {
     const settings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     );
-    await _plugin.initialize(settings);
+    await _plugin.initialize(settings: settings);
     _initialized = true;
   }
 
@@ -66,13 +66,13 @@ class PrayerAlarmService {
         scheduled = scheduled.add(const Duration(days: 1));
       }
       await _plugin.zonedSchedule(
-        index + 1,
-        isBangla ? _banglaName(prayer) : prayer,
-        isBangla
+        id: index + 1,
+        title: isBangla ? _banglaName(prayer) : prayer,
+        body: isBangla
             ? 'নামাজের সময় হয়েছে।'
             : 'It is time for $prayer prayer.',
-        scheduled,
-        const NotificationDetails(
+        scheduledDate: scheduled,
+        notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             _channelId,
             _channelName,
