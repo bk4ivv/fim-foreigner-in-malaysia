@@ -3205,6 +3205,7 @@ Future<void> _openFirstLaunchSetup(
 ) async {
   var selectedTheme = appThemeMode.value;
   var selectedReligion = UserReligion.notSet;
+  var confirmedCountry = false;
   final completed = await showDialog<bool>(
     context: context,
     barrierDismissible: false,
@@ -3217,6 +3218,26 @@ Future<void> _openFirstLaunchSetup(
             children: [
               const Text(
                 'Choose your defaults now. You can change everything later in Settings.',
+              ),
+              const SizedBox(height: 16),
+              Card(
+                margin: EdgeInsets.zero,
+                child: CheckboxListTile(
+                  value: confirmedCountry,
+                  onChanged: (value) {
+                    setDialogState(() => confirmedCountry = value ?? false);
+                  },
+                  secondary: Text(
+                    country.flag,
+                    style: const TextStyle(fontSize: 26),
+                  ),
+                  title: Text(
+                    'Country: ${country.name}',
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  subtitle: const Text('Confirm this is your selected country.'),
+                  controlAffinity: ListTileControlAffinity.trailing,
+                ),
               ),
               const SizedBox(height: 18),
               const Text(
@@ -3277,7 +3298,9 @@ Future<void> _openFirstLaunchSetup(
         ),
         actions: [
           FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
+            onPressed: confirmedCountry
+                ? () => Navigator.of(dialogContext).pop(true)
+                : null,
             child: const Text('Save defaults'),
           ),
         ],
