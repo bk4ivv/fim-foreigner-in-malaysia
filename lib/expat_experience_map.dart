@@ -363,12 +363,19 @@ class _RealMalaysiaMapState extends State<_RealMalaysiaMap> {
     super.initState();
     if (defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS) {
-      _controller = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setNavigationDelegate(NavigationDelegate(onWebResourceError: (_) {}))
-        ..loadRequest(
-          Uri.parse('https://www.openstreetmap.org/#map=6/4.210/101.975'),
-        );
+      try {
+        _controller = WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted)
+          ..setNavigationDelegate(
+            NavigationDelegate(onWebResourceError: (_) {}),
+          )
+          ..loadRequest(
+            Uri.parse('https://www.openstreetmap.org/#map=6/4.210/101.975'),
+          );
+      } on AssertionError {
+        // Flutter widget tests do not install a platform WebView implementation.
+        _controller = null;
+      }
     }
   }
 
