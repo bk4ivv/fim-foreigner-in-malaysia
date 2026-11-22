@@ -3187,20 +3187,7 @@ class FIMWelcomePage extends StatelessWidget {
             SizedBox(
               height: 56,
               child: FilledButton.icon(
-                onPressed: () async {
-                  activeWorkerCountry.value = country;
-                  activeWorkerLanguage.value = AppLanguage.english;
-                  await _saveWorkerSelection(country, AppLanguage.english);
-                  if (!context.mounted) return;
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const WorkerUtilityShellPage(
-                        language: AppLanguage.english,
-                      ),
-                    ),
-                    (route) => false,
-                  );
-                },
+                onPressed: () => _openFirstLaunchSetup(context, country),
                 icon: const Icon(Icons.arrow_forward_rounded),
                 label: const Text('Open FIM'),
               ),
@@ -3210,6 +3197,112 @@ class FIMWelcomePage extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _openFirstLaunchSetup(
+  BuildContext context,
+  CountryOption country,
+) async {
+  var selectedTheme = appThemeMode.value;
+  var selectedReligion = UserReligion.notSet;
+  final completed = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setDialogState) => AlertDialog(
+        title: const Text('Set up FIM'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Choose your defaults now. You can change everything later in Settings.',
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Appearance',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+              for (final option in <(ThemeMode, String, IconData)>[
+                (ThemeMode.system, 'System default', Icons.brightness_auto),
+                (ThemeMode.light, 'Light', Icons.light_mode_outlined),
+                (ThemeMode.dark, 'Dark', Icons.dark_mode_outlined),
+              ])
+                RadioListTile<ThemeMode>(
+                  contentPadding: EdgeInsets.zero,
+                  value: option.$1,
+                  groupValue: selectedTheme,
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setDialogState(() => selectedTheme = value);
+                  },
+                  secondary: Icon(option.$3),
+                  title: Text(option.$2),
+                ),
+              const SizedBox(height: 8),
+              const Text(
+                'Religion (optional)',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+              RadioListTile<UserReligion>(
+                contentPadding: EdgeInsets.zero,
+                value: UserReligion.notSet,
+                groupValue: selectedReligion,
+                onChanged: (value) {
+                  if (value != null) setDialogState(() => selectedReligion = value);
+                },
+                title: const Text('Prefer not to say'),
+              ),
+              RadioListTile<UserReligion>(
+                contentPadding: EdgeInsets.zero,
+                value: UserReligion.islam,
+                groupValue: selectedReligion,
+                onChanged: (value) {
+                  if (value != null) setDialogState(() => selectedReligion = value);
+                },
+                title: const Text('Islam'),
+                subtitle: const Text('Prayer times and optional alarms will be available.'),
+              ),
+              RadioListTile<UserReligion>(
+                contentPadding: EdgeInsets.zero,
+                value: UserReligion.other,
+                groupValue: selectedReligion,
+                onChanged: (value) {
+                  if (value != null) setDialogState(() => selectedReligion = value);
+                },
+                title: const Text('Other / prefer not to say'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Save defaults'),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (completed != true || !context.mounted) return;
+  appThemeMode.value = selectedTheme;
+  activeWorkerCountry.value = country;
+  activeWorkerLanguage.value = AppLanguage.english;
+  activeWorkerReligion.value = selectedReligion;
+  await _saveWorkerSelection(
+    country,
+    AppLanguage.english,
+    religion: selectedReligion,
+  );
+  if (!context.mounted) return;
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute<void>(
+      builder: (_) => const WorkerUtilityShellPage(
+        language: AppLanguage.english,
+      ),
+    ),
+    (route) => false,
+  );
 }
 
 // Reference-informed utility shell: compact worker actions, three clear destinations,
