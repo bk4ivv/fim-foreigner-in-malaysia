@@ -39,6 +39,24 @@ class FirebaseNotificationService {
     if (!_initialized) return null;
     return FirebaseMessaging.instance.getToken();
   }
+
+  static Future<void> enableDailyUpdates({required bool includeHadith}) async {
+    final granted = await requestPermission();
+    if (!granted) return;
+    await FirebaseMessaging.instance.subscribeToTopic('fim_news_updates');
+    if (includeHadith) {
+      await FirebaseMessaging.instance.subscribeToTopic('fim_hadith_updates');
+    } else {
+      await FirebaseMessaging.instance.unsubscribeFromTopic('fim_hadith_updates');
+    }
+  }
+
+  static Future<void> disableDailyUpdates() async {
+    await initialize();
+    if (!_initialized) return;
+    await FirebaseMessaging.instance.unsubscribeFromTopic('fim_news_updates');
+    await FirebaseMessaging.instance.unsubscribeFromTopic('fim_hadith_updates');
+  }
 }
 
 @pragma('vm:entry-point')

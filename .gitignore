@@ -52,3 +52,9 @@ app.*.map.json
 /android/key.properties
 /android/app/*.jks
 /android/app/*.keystore
+
+# Firebase Functions generated output and local credentials
+/functions/node_modules/
+/functions/lib/
+/functions/.env
+/functions/.env.*

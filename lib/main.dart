@@ -1159,6 +1159,7 @@ const _savedLanguageKey = 'fim.selected_language_index';
 const _savedReligionKey = 'fim.selected_religion';
 const _savedPrayerAlarmsKey = 'fim.prayer_alarms_enabled';
 const _savedPrayerTimePrefix = 'fim.prayer_time.';
+const _savedDailyUpdatesKey = 'fim.daily_updates_enabled';
 
 Future<void> _saveWorkerSelection(
   CountryOption country,
@@ -4076,6 +4077,7 @@ class _SettingsPageState extends State<SettingsPage> {
   late AppLanguage _language = widget.currentLanguage;
   UserReligion _religion = activeWorkerReligion.value;
   bool _prayerAlarmsEnabled = false;
+  bool _dailyUpdatesEnabled = false;
   final Map<String, TimeOfDay> _prayerTimes = {
     'Fajr': const TimeOfDay(hour: 5, minute: 30),
     'Dhuhr': const TimeOfDay(hour: 13, minute: 15),
@@ -4095,6 +4097,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!mounted) return;
     setState(() {
       _prayerAlarmsEnabled = preferences.getBool(_savedPrayerAlarmsKey) ?? false;
+      _dailyUpdatesEnabled = preferences.getBool(_savedDailyUpdatesKey) ?? false;
       for (final prayer in _prayerTimes.keys) {
         final encoded = preferences.getString('$_savedPrayerTimePrefix$prayer');
         final parts = encoded?.split(':');
@@ -4173,6 +4176,11 @@ class _SettingsPageState extends State<SettingsPage> {
     if (selected != UserReligion.islam) {
       await PrayerAlarmService.cancelPrayerReminders();
     }
+    if (_dailyUpdatesEnabled) {
+      await FirebaseNotificationService.enableDailyUpdates(
+        includeHadith: selected == UserReligion.islam,
+      );
+    }
   }
 
   Future<void> _setPrayerAlarm(bool enabled) async {
@@ -4197,6 +4205,19 @@ class _SettingsPageState extends State<SettingsPage> {
     final preferences = await SharedPreferences.getInstance();
     await preferences.setBool(_savedPrayerAlarmsKey, enabled);
     if (mounted) setState(() => _prayerAlarmsEnabled = enabled);
+  }
+
+  Future<void> _setDailyUpdates(bool enabled) async {
+    if (enabled) {
+      await FirebaseNotificationService.enableDailyUpdates(
+        includeHadith: _religion == UserReligion.islam,
+      );
+    } else {
+      await FirebaseNotificationService.disableDailyUpdates();
+    }
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setBool(_savedDailyUpdatesKey, enabled);
+    if (mounted) setState(() => _dailyUpdatesEnabled = enabled);
   }
 
   Future<void> _schedulePrayerAlarms() async {
@@ -4442,6 +4463,20 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ],
+                const SizedBox(height: 12),
+                Card(
+                  child: SwitchListTile(
+                    secondary: const Icon(Icons.notifications_active_outlined),
+                    title: Text(bn ? 'দৈনিক আপডেট' : 'Daily updates'),
+                    subtitle: Text(
+                      bn
+                          ? 'সরকারি foreigner news${_religion == UserReligion.islam ? ' ও Hadith' : ''} notification পেতে চালু করুন।'
+                          : 'Receive official foreigner news${_religion == UserReligion.islam ? ' and Hadith' : ''} notifications.',
+                    ),
+                    value: _dailyUpdatesEnabled,
+                    onChanged: _setDailyUpdates,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 ValueListenableBuilder<ThemeMode>(
                   valueListenable: appThemeMode,
