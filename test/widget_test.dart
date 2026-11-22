@@ -141,7 +141,12 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const MaterialApp(home: ExpatExperienceMapPage()));
-    expect(find.text('Malaysia through expat eyes'), findsOneWidget);
+    expect(
+      find.text(
+        'Real Malaysia map from OpenStreetMap · zoom and pan enabled',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Community experiences'), findsOneWidget);
     expect(find.text('Share experience'), findsOneWidget);
     await tester.scrollUntilVisible(
