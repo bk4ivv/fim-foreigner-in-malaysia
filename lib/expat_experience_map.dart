@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 const _experienceEmail = 'hire.borhankabir@hotmail.com';
 
@@ -316,7 +317,7 @@ class _MapHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 220,
+      height: 340,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -326,46 +327,47 @@ class _MapHero extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(28),
       ),
-      child: Stack(
-        children: [
-          Positioned.fill(child: CustomPaint(painter: _MapGridPainter())),
-          const Positioned(
-            left: 25,
-            top: 22,
-            child: Icon(Icons.explore_outlined, color: Colors.white, size: 30),
-          ),
-          Positioned(
-            left: 25,
-            top: 64,
-            right: 24,
-            child: Text(
-              isBangla
-                  ? 'প্রবাসীদের দেখা Malaysia'
-                  : 'Malaysia through expat eyes',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 23,
-                fontWeight: FontWeight.w900,
+      child: Stack(children: [
+        Positioned.fill(child: _RealMalaysiaMap()),
+        Positioned(
+          left: 16,
+          right: 16,
+          bottom: 14,
+          child: DecoratedBox(
+            decoration: BoxDecoration(color: Colors.black.withValues(alpha: .72), borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Text(
+                isBangla ? 'OpenStreetMap-এর আসল Malaysia map · zoom ও pan করা যাবে' : 'Real Malaysia map from OpenStreetMap · zoom and pan enabled',
+                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
               ),
             ),
           ),
-          Positioned(
-            left: 25,
-            bottom: 24,
-            right: 25,
-            child: Text(
-              isBangla ? 'ঘোরা, থাকা, কাজ ও নিরাপত্তার বাস্তব অভিজ্ঞতা' : 'Real experiences about travel, work, stays, food and safety',
-              style: const TextStyle(color: Color(0xFFD7E5FF), height: 1.35),
-            ),
-          ),
-          const _MapPin(left: 72, top: 122, label: 'KL'),
-          const _MapPin(left: 188, top: 103, label: 'IPOH'),
-          const _MapPin(left: 262, top: 150, label: 'JB'),
-          const _MapPin(left: 128, top: 176, label: 'MELAKA'),
-        ],
-      ),
+        ),
+      ]),
     );
   }
+}
+
+class _RealMalaysiaMap extends StatefulWidget {
+  @override
+  State<_RealMalaysiaMap> createState() => _RealMalaysiaMapState();
+}
+
+class _RealMalaysiaMapState extends State<_RealMalaysiaMap> {
+  late final WebViewController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(NavigationDelegate(onWebResourceError: (_) {}))
+      ..loadRequest(Uri.parse('https://www.openstreetmap.org/#map=6/4.210/101.975'));
+  }
+
+  @override
+  Widget build(BuildContext context) => WebViewWidget(controller: _controller);
 }
 
 class _MapPin extends StatelessWidget {

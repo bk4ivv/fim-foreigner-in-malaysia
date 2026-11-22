@@ -22,11 +22,25 @@ import 'user_manual_page.dart';
 
 enum CivicWeather { clear, hot, rain, storm }
 
+class CivicWeatherReport {
+  const CivicWeatherReport({
+    required this.temperatureC,
+    required this.weatherCode,
+    required this.updatedAt,
+  });
+
+  final double temperatureC;
+  final int weatherCode;
+  final DateTime updatedAt;
+}
+
 enum UserReligion { notSet, islam, christianity, hinduism, buddhism, other }
 
 final ValueNotifier<CivicWeather> appWeather = ValueNotifier<CivicWeather>(
   CivicWeather.clear,
 );
+final ValueNotifier<CivicWeatherReport?> appWeatherReport =
+    ValueNotifier<CivicWeatherReport?>(null);
 
 Future<void> _refreshCivicWeather() async {
   try {
@@ -70,10 +84,26 @@ Future<void> _refreshCivicWeather() async {
         ? CivicWeather.hot
         : CivicWeather.clear;
     appWeather.value = weather;
+    appWeatherReport.value = CivicWeatherReport(
+      temperatureC: temperature,
+      weatherCode: code,
+      updatedAt: DateTime.now(),
+    );
   } catch (_) {
     // Weather is decorative; the app remains usable without location/network.
   }
 }
+
+String _weatherConditionLabel(int code, bool bangla) => code >= 95
+    ? (bangla ? 'ঝড়' : 'Storm')
+    : code >= 51 && code <= 82
+    ? (bangla ? 'বৃষ্টি' : 'Rain')
+    : code >= 1 && code <= 3
+    ? (bangla ? 'আংশিক মেঘলা' : 'Partly cloudy')
+    : (bangla ? 'পরিষ্কার' : 'Clear');
+
+String _formatWeatherTime(DateTime value) =>
+    '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
 
 const _appTitle = 'FIM - Foreigner in Malaysia';
 // FIM-TM is reserved for the Android launcher identity. Inside the app,
@@ -3728,6 +3758,35 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
     );
   }
 
+  void _openNewsPortal() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => StatusWebViewPage(
+          title: widget.language == AppLanguage.bangla
+              ? 'বিদেশি কর্মী সংবাদ'
+              : 'Foreigner updates',
+          url: 'https://esd.imi.gov.my/portal/latest-news/announcement/',
+          copy: _copy,
+        ),
+      ),
+    );
+  }
+
+  void _openHadithPortal() {
+    if (activeWorkerReligion.value != UserReligion.islam) return;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => StatusWebViewPage(
+          title: widget.language == AppLanguage.bangla
+              ? 'হাদিস পোর্টাল'
+              : 'Hadith portal',
+          url: 'https://sunnah.com/',
+          copy: _copy,
+        ),
+      ),
+    );
+  }
+
   void _showGamesComingSoon() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -3933,6 +3992,9 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
             onOpenMoneyManager: _openMoneyManager,
             onOpenPrayerTimes: _openPrayerTimes,
             showPrayerTimes: activeWorkerReligion.value == UserReligion.islam,
+            onOpenNews: _openNewsPortal,
+            onOpenHadith: _openHadithPortal,
+            showHadith: activeWorkerReligion.value == UserReligion.islam,
             onOpenLearn: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => _LearningTab(
@@ -4921,6 +4983,9 @@ class _WorkerDashboardTab extends StatelessWidget {
     required this.onOpenMoneyManager,
     required this.onOpenPrayerTimes,
     required this.showPrayerTimes,
+    required this.onOpenNews,
+    required this.onOpenHadith,
+    required this.showHadith,
     required this.onOpenLearn,
     required this.onOpenHelp,
     required this.onOpenManual,
@@ -4940,6 +5005,9 @@ class _WorkerDashboardTab extends StatelessWidget {
   final VoidCallback onOpenMoneyManager;
   final VoidCallback onOpenPrayerTimes;
   final bool showPrayerTimes;
+  final VoidCallback onOpenNews;
+  final VoidCallback onOpenHadith;
+  final bool showHadith;
   final VoidCallback onOpenLearn;
   final VoidCallback onOpenHelp;
   final VoidCallback onOpenManual;
@@ -4987,6 +5055,19 @@ class _WorkerDashboardTab extends StatelessWidget {
         color: const Color(0xFF1A73E8),
         onTap: () => onTool(ToolId.translate),
       ),
+      _V218ServiceCard(
+        title: label('Official updates', 'সরকারি আপডেট'),
+        icon: Icons.campaign_outlined,
+        color: AppPalette.flagRed,
+        onTap: onOpenNews,
+      ),
+      if (showHadith)
+        _V218ServiceCard(
+          title: label('Hadith portal', 'হাদিস পোর্টাল'),
+          icon: Icons.menu_book_rounded,
+          color: const Color(0xFF2D8A72),
+          onTap: onOpenHadith,
+        ),
       if (showPrayerTimes)
         _V218ServiceCard(
           title: label('Prayer times', 'নামাজের সময়'),
@@ -5077,6 +5158,22 @@ class _WorkerDashboardTab extends StatelessWidget {
               ? 'সরকারি মালয়েশিয়ান সেবা'
               : 'Official Malaysian services',
           trailing: _CountPill(label: '${cards.length} SERVICES'),
+        ),
+        const SizedBox(height: 10),
+        ValueListenableBuilder<CivicWeatherReport?>(
+          valueListenable: appWeatherReport,
+          builder: (context, report, _) {
+            final detail = report == null
+                ? label('Enable location to fetch current weather', 'বর্তমান আবহাওয়া দেখতে location চালু করুন')
+                : '${report.temperatureC.toStringAsFixed(1)}°C · ${_weatherConditionLabel(report.weatherCode, bn)}\nOpen-Meteo · updated ${_formatWeatherTime(report.updatedAt)}';
+            return Card(
+              child: ListTile(
+                leading: Icon(report == null ? Icons.cloud_off_outlined : Icons.wb_sunny_outlined),
+                title: Text(label('Live weather near you', 'আপনার কাছের লাইভ আবহাওয়া'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: Text(detail),
+              ),
+            );
+          },
         ),
         const SizedBox(height: 10),
         GridView.builder(
@@ -6762,6 +6859,51 @@ String _weatherLabel(CivicWeather weather) => switch (weather) {
   CivicWeather.storm => 'Storm warning · tap to refresh',
 };
 
+Future<void> _showWeatherReport(BuildContext context) async {
+  await _refreshCivicWeather();
+  if (!context.mounted) return;
+  final report = appWeatherReport.value;
+  if (report == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Live weather is unavailable right now.')),
+    );
+    return;
+  }
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Current weather'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${report.temperatureC.toStringAsFixed(1)}°C',
+            style: Theme.of(dialogContext).textTheme.displaySmall?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(_weatherLabel(appWeather.value)),
+          const SizedBox(height: 8),
+          Text(
+            'Updated ${report.updatedAt.toLocal().toString().substring(0, 16)}',
+            style: Theme.of(dialogContext).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 12),
+          const Text('Source: Open-Meteo using your device location.'),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('Close'),
+        ),
+      ],
+    ),
+  );
+}
+
 class _AppBar extends StatelessWidget implements PreferredSizeWidget {
   const _AppBar({
     required this.title,
@@ -6837,7 +6979,7 @@ class _AppBar extends StatelessWidget implements PreferredSizeWidget {
             valueListenable: appWeather,
             builder: (context, weather, _) => IconButton(
               tooltip: _weatherLabel(weather),
-              onPressed: () => _refreshCivicWeather(),
+              onPressed: () => _showWeatherReport(context),
               icon: Icon(_weatherIcon(weather), color: foreground),
             ),
           )
