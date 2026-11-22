@@ -19,6 +19,7 @@ import 'malaysia_ticket_portal.dart';
 import 'money_manager_page.dart';
 import 'prayer_alarm_service.dart';
 import 'user_manual_page.dart';
+import 'firebase_notification_service.dart';
 
 enum CivicWeather { clear, hot, rain, storm }
 
@@ -139,6 +140,7 @@ abstract final class AppPalette {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await FirebaseNotificationService.initialize();
   // The core app is intentionally offline-first, so never block the utility UI
   // on a network session during startup.
   runApp(const ForeignWorkerMalaysiaApp());

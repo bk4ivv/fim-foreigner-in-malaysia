@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "897697079113",
+    "project_id": "fim---foreigner-in-malaysia",
+    "storage_bucket": "fim---foreigner-in-malaysia.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:897697079113:android:7d2378b8c6a11263400498",
+        "android_client_info": {
+          "package_name": "com.expatstatuschecker.expat_status_checker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDasztiMBRJAJKy-OoOEFVxCD4hWh4rEpM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
