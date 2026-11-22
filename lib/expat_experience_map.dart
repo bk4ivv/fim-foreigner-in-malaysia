@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -355,19 +356,42 @@ class _RealMalaysiaMap extends StatefulWidget {
 }
 
 class _RealMalaysiaMapState extends State<_RealMalaysiaMap> {
-  late final WebViewController _controller;
+  WebViewController? _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(NavigationDelegate(onWebResourceError: (_) {}))
-      ..loadRequest(Uri.parse('https://www.openstreetmap.org/#map=6/4.210/101.975'));
+    if (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS) {
+      _controller = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setNavigationDelegate(NavigationDelegate(onWebResourceError: (_) {}))
+        ..loadRequest(
+          Uri.parse('https://www.openstreetmap.org/#map=6/4.210/101.975'),
+        );
+    }
   }
 
   @override
-  Widget build(BuildContext context) => WebViewWidget(controller: _controller);
+  Widget build(BuildContext context) {
+    final controller = _controller;
+    if (controller == null) {
+      return ColoredBox(
+        color: const Color(0xFF124B9B),
+        child: Center(
+          child: Text(
+            'Real Malaysia map from OpenStreetMap · zoom and pan enabled',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      );
+    }
+    return WebViewWidget(controller: controller);
+  }
 }
 
 class _MapPin extends StatelessWidget {
