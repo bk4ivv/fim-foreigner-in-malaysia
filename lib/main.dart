@@ -1544,6 +1544,7 @@ ThemeData _buildAppTheme(Brightness brightness) {
   return ThemeData(
     useMaterial3: true,
     fontFamily: 'Roboto',
+    fontFamilyFallback: const ['NotoSansBengali'],
     colorScheme: scheme,
     pageTransitionsTheme: const PageTransitionsTheme(
       builders: <TargetPlatform, PageTransitionsBuilder>{
@@ -5067,7 +5068,7 @@ class _FimWeatherHero extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          label('LIVE WEATHER NEAR YOU', 'আপনার কাছের লাইভ আবহাওয়া'),
+                          label('Live weather near you', 'আপনার কাছের লাইভ আবহাওয়া'),
                           style: const TextStyle(
                             color: Color(0xFFB9E7F0),
                             fontSize: 11,
@@ -5273,7 +5274,7 @@ class _WorkerDashboardTab extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _HeroStatusPill(label: 'FIM WEATHER & SERVICES'),
+                    const _HeroStatusPill(label: 'FIM Weather & Services'),
                     const SizedBox(height: 9),
                     Text(
                       copy.servicePageTitle,
