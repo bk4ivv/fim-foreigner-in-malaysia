@@ -6,9 +6,9 @@ class UserManualPage extends StatelessWidget {
 
   final bool isBangla;
 
-  Future<void> _openFacebook(BuildContext context) async {
+  Future<void> _openYouTube(BuildContext context) async {
     final opened = await launchUrl(
-      Uri.parse('https://www.facebook.com/bk4ivv'),
+      Uri.parse('https://youtube.com/@fim4u_my'),
       mode: LaunchMode.externalApplication,
     );
     if (!opened && context.mounted) {
@@ -16,8 +16,8 @@ class UserManualPage extends StatelessWidget {
         SnackBar(
           content: Text(
             isBangla
-                ? 'Facebook profile খোলা যায়নি।'
-                : 'The Facebook profile could not be opened.',
+                ? 'FIM YouTube channel খোলা যায়নি।'
+                : 'The FIM YouTube channel could not be opened.',
           ),
         ),
       );
@@ -70,7 +70,7 @@ class UserManualPage extends StatelessWidget {
             (
               '৪',
               'সহায়তা নিন',
-              'Help & info এবং Community থেকে সহায়তা, রিপোর্ট বা পোস্ট পাঠান।',
+              'Help & info থেকে সহায়তা, অফিসিয়াল লিংক ও জরুরি তথ্য দেখুন।',
             ),
           ]
         : const [
@@ -92,7 +92,7 @@ class UserManualPage extends StatelessWidget {
             (
               '4',
               'Get help',
-              'Use Help & info and Community for guidance, reports, and community posts.',
+              'Use Help & info for guidance, official links, and emergency information.',
             ),
           ];
     return Scaffold(
@@ -195,12 +195,12 @@ class UserManualPage extends StatelessWidget {
           ],
           const SizedBox(height: 8),
           OutlinedButton.icon(
-            onPressed: () => _openFacebook(context),
-            icon: const Icon(Icons.facebook_rounded),
+            onPressed: () => _openYouTube(context),
+            icon: const Icon(Icons.play_circle_fill_rounded),
             label: Text(
               isBangla
-                  ? 'Facebook-এ User Manual দেখুন'
-                  : 'Open the User Manual on Facebook',
+                  ? 'FIM-এর official YouTube channel দেখুন'
+                  : 'Watch the official FIM YouTube channel',
             ),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 15),

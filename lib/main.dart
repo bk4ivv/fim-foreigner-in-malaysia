@@ -3400,15 +3400,11 @@ class _WorkerLaunchPageState extends State<WorkerLaunchPage>
     final saved = await _loadWorkerSelection();
     if (!mounted) return;
     if (saved == null) {
-      final countries = await _loadCountryOptions();
-      final malaysia = countries.firstWhere(
-        (country) => country.code.toUpperCase() == 'MY',
-      );
-      activeWorkerCountry.value = malaysia;
-      activeWorkerLanguage.value = AppLanguage.english;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
-          builder: (_) => FIMWelcomePage(country: malaysia),
+          // Do not assume Malaysia on first launch. Every user chooses their
+          // own country and language before FIM saves any defaults.
+          builder: (_) => const CountrySelectionPage(),
         ),
       );
       return;
@@ -3994,6 +3990,7 @@ class _WorkerUtilityShellPageState extends State<WorkerUtilityShellPage> {
             onOpenTools: _openToolsPage,
             onOpenMoneyManager: _openMoneyManager,
             onOpenPrayerTimes: _openPrayerTimes,
+            onOpenWeather: () => _showWeatherReport(context),
             showPrayerTimes: activeWorkerReligion.value == UserReligion.islam,
             onOpenNews: _openNewsPortal,
             onOpenHadith: _openHadithPortal,
@@ -5005,6 +5002,123 @@ String _serviceCardTitle(ServiceItem service, bool bangla) {
   }
 }
 
+class _FimWeatherHero extends StatelessWidget {
+  const _FimWeatherHero({required this.isBangla, required this.onRefresh});
+
+  final bool isBangla;
+  final VoidCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = (String en, String bn) => isBangla ? bn : en;
+    return ValueListenableBuilder<CivicWeatherReport?>(
+      valueListenable: appWeatherReport,
+      builder: (context, report, _) {
+        final hasWeather = report != null;
+        final temperature = hasWeather
+            ? '${report.temperatureC.toStringAsFixed(1)}°C'
+            : '--°C';
+        final description = hasWeather
+            ? _weatherConditionLabel(report.weatherCode, isBangla)
+            : label('Tap to enable location and fetch live weather', 'লাইভ আবহাওয়া দেখতে ট্যাপ করুন');
+        return Card(
+          clipBehavior: Clip.antiAlias,
+          margin: EdgeInsets.zero,
+          child: InkWell(
+            onTap: onRefresh,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF10294A), Color(0xFF176B7A)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Row(
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.92, end: 1.0),
+                    duration: const Duration(milliseconds: 900),
+                    curve: Curves.easeOutBack,
+                    builder: (context, scale, child) => Transform.scale(
+                      scale: scale,
+                      child: child,
+                    ),
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.14),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        hasWeather
+                            ? _weatherIcon(appWeather.value)
+                            : Icons.cloud_queue_rounded,
+                        color: const Color(0xFFFFD76A),
+                        size: 35,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label('LIVE WEATHER NEAR YOU', 'আপনার কাছের লাইভ আবহাওয়া'),
+                          style: const TextStyle(
+                            color: Color(0xFFB9E7F0),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          temperature,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 27,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        Text(
+                          description,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFFE3F5F4),
+                            fontSize: 12,
+                            height: 1.35,
+                          ),
+                        ),
+                        if (report != null)
+                          Text(
+                            'Open-Meteo · ${_formatWeatherTime(report.updatedAt)}',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.62),
+                              fontSize: 10,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.refresh_rounded,
+                    color: Colors.white.withValues(alpha: 0.82),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _WorkerDashboardTab extends StatelessWidget {
   const _WorkerDashboardTab({
     required this.language,
@@ -5019,6 +5133,7 @@ class _WorkerDashboardTab extends StatelessWidget {
     required this.onOpenTools,
     required this.onOpenMoneyManager,
     required this.onOpenPrayerTimes,
+    required this.onOpenWeather,
     required this.showPrayerTimes,
     required this.onOpenNews,
     required this.onOpenHadith,
@@ -5041,6 +5156,7 @@ class _WorkerDashboardTab extends StatelessWidget {
   final VoidCallback onOpenTools;
   final VoidCallback onOpenMoneyManager;
   final VoidCallback onOpenPrayerTimes;
+  final VoidCallback onOpenWeather;
   final bool showPrayerTimes;
   final VoidCallback onOpenNews;
   final VoidCallback onOpenHadith;
@@ -5157,7 +5273,7 @@ class _WorkerDashboardTab extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _HeroStatusPill(label: 'WORKER DASHBOARD'),
+                    const _HeroStatusPill(label: 'FIM WEATHER & SERVICES'),
                     const SizedBox(height: 9),
                     Text(
                       copy.servicePageTitle,
@@ -5197,20 +5313,9 @@ class _WorkerDashboardTab extends StatelessWidget {
           trailing: _CountPill(label: '${cards.length} SERVICES'),
         ),
         const SizedBox(height: 10),
-        ValueListenableBuilder<CivicWeatherReport?>(
-          valueListenable: appWeatherReport,
-          builder: (context, report, _) {
-            final detail = report == null
-                ? label('Enable location to fetch current weather', 'বর্তমান আবহাওয়া দেখতে location চালু করুন')
-                : '${report.temperatureC.toStringAsFixed(1)}°C · ${_weatherConditionLabel(report.weatherCode, bn)}\nOpen-Meteo · updated ${_formatWeatherTime(report.updatedAt)}';
-            return Card(
-              child: ListTile(
-                leading: Icon(report == null ? Icons.cloud_off_outlined : Icons.wb_sunny_outlined),
-                title: Text(label('Live weather near you', 'আপনার কাছের লাইভ আবহাওয়া'), style: const TextStyle(fontWeight: FontWeight.w800)),
-                subtitle: Text(detail),
-              ),
-            );
-          },
+        _FimWeatherHero(
+          isBangla: bn,
+          onRefresh: onOpenWeather,
         ),
         const SizedBox(height: 10),
         GridView.builder(
