@@ -387,7 +387,7 @@ class _RealMalaysiaMapState extends State<_RealMalaysiaMap> {
         color: const Color(0xFF124B9B),
         child: Center(
           child: Text(
-            'Real Malaysia map from OpenStreetMap · zoom and pan enabled',
+            'OpenStreetMap map preview is unavailable in this test environment.',
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white,
