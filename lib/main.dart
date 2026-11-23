@@ -3110,13 +3110,91 @@ class FirstUseGuidePage extends StatelessWidget {
   }
 }
 
-class FIMWelcomePage extends StatelessWidget {
+class FIMWelcomePage extends StatefulWidget {
   const FIMWelcomePage({super.key, required this.country});
 
   final CountryOption country;
 
   @override
+  State<FIMWelcomePage> createState() => _FIMWelcomePageState();
+}
+
+class _FIMWelcomePageState extends State<FIMWelcomePage> {
+  late CountryOption _country = widget.country;
+  late final Future<List<CountryOption>> _countries = _loadCountryOptions();
+
+  Future<void> _changeCountry() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        var query = '';
+        return StatefulBuilder(
+          builder: (context, setSheetState) => SafeArea(
+            child: SizedBox(
+              height: MediaQuery.sizeOf(context).height * 0.82,
+              child: FutureBuilder<List<CountryOption>>(
+                future: _countries,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final countries = snapshot.data!
+                      .where((country) => country.name.toLowerCase().contains(
+                            query.trim().toLowerCase(),
+                          ))
+                      .toList(growable: false);
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Change country or region',
+                          style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          autofocus: true,
+                          onChanged: (value) => setSheetState(() => query = value),
+                          decoration: const InputDecoration(
+                            prefixIcon: Icon(Icons.search_rounded),
+                            hintText: 'Search country or region',
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: countries.length,
+                            itemBuilder: (_, index) {
+                              final country = countries[index];
+                              return _CountryButton(
+                                country: country,
+                                onPressed: () {
+                                  setState(() => _country = country);
+                                  activeWorkerCountry.value = country;
+                                  Navigator.of(sheetContext).pop();
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final country = _country;
     final scheme = Theme.of(context).colorScheme;
     final services = const [
       ('Government checks', Icons.verified_outlined),
@@ -3210,7 +3288,7 @@ class FIMWelcomePage extends StatelessWidget {
               ),
             const SizedBox(height: 14),
             Text(
-              '${country.flag}  Malaysia is your starting country · English is your default language',
+              '${country.flag}  ${country.name} is your starting country · English is your default language',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: scheme.onSurface.withValues(alpha: 0.62),
@@ -3225,6 +3303,12 @@ class FIMWelcomePage extends StatelessWidget {
                 icon: const Icon(Icons.arrow_forward_rounded),
                 label: const Text('Open FIM'),
               ),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: _changeCountry,
+              icon: const Icon(Icons.public_rounded),
+              label: Text('Change country · ${country.name}'),
             ),
           ],
         ),
@@ -3401,11 +3485,15 @@ class _WorkerLaunchPageState extends State<WorkerLaunchPage>
     final saved = await _loadWorkerSelection();
     if (!mounted) return;
     if (saved == null) {
+      final countries = await _loadCountryOptions();
+      final malaysia = countries.firstWhere(
+        (country) => country.code.toUpperCase() == 'MY',
+      );
+      activeWorkerCountry.value = malaysia;
+      activeWorkerLanguage.value = AppLanguage.english;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
-          // Do not assume Malaysia on first launch. Every user chooses their
-          // own country and language before FIM saves any defaults.
-          builder: (_) => const CountrySelectionPage(),
+          builder: (_) => FIMWelcomePage(country: malaysia),
         ),
       );
       return;
