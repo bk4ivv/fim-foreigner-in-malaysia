@@ -106,6 +106,30 @@ String _weatherConditionLabel(int code, bool bangla) => code >= 95
 String _formatWeatherTime(DateTime value) =>
     '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
 
+String _formatClock(DateTime value) =>
+    '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+
+Duration _countryUtcOffset(String code) => switch (code.toUpperCase()) {
+  'BD' => const Duration(hours: 6),
+  'IN' => const Duration(hours: 5, minutes: 30),
+  'NP' => const Duration(hours: 5, minutes: 45),
+  'LK' => const Duration(hours: 5, minutes: 30),
+  'MM' => const Duration(hours: 6, minutes: 30),
+  'TH' || 'VN' || 'KH' || 'ID' => const Duration(hours: 7),
+  'MY' || 'SG' || 'PH' || 'CN' || 'HK' || 'TW' => const Duration(hours: 8),
+  'JP' || 'KR' => const Duration(hours: 9),
+  'PK' => const Duration(hours: 5),
+  'AE' || 'OM' => const Duration(hours: 4),
+  'GB' => Duration.zero,
+  'DE' || 'FR' || 'ES' || 'IT' => const Duration(hours: 1),
+  _ => const Duration(hours: 8),
+};
+
+DateTime _selectedCountryTime(CountryOption? country) {
+  final offset = _countryUtcOffset(country?.code ?? 'MY');
+  return DateTime.now().toUtc().add(offset);
+}
+
 const _appTitle = 'FIM - Foreigner in Malaysia';
 // FIM-TM is reserved for the Android launcher identity. Inside the app,
 // use the transparent FIM-T mark on light and dark surfaces.
@@ -1209,21 +1233,24 @@ class ForeignWorkerMalaysiaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: appThemeMode,
-      builder: (context, mode, _) => MaterialApp(
-        title: _appTitle,
-        debugShowCheckedModeBanner: false,
-        themeMode: mode,
-        theme: _buildAppTheme(Brightness.light),
-        darkTheme: _buildAppTheme(Brightness.dark),
-        builder: (context, child) => CivicAppBackdrop(
-          child: DefaultTextStyle.merge(
-            style: const TextStyle(fontFamilyFallback: ['NotoSansBengali']),
-            child: child ?? const SizedBox.shrink(),
+    return ValueListenableBuilder<CountryOption?>(
+      valueListenable: activeWorkerCountry,
+      builder: (context, country, _) => ValueListenableBuilder<ThemeMode>(
+        valueListenable: appThemeMode,
+        builder: (context, mode, _) => MaterialApp(
+          title: _appTitle,
+          debugShowCheckedModeBanner: false,
+          themeMode: mode,
+          theme: _buildAppTheme(Brightness.light, country: country),
+          darkTheme: _buildAppTheme(Brightness.dark, country: country),
+          builder: (context, child) => CivicAppBackdrop(
+            child: DefaultTextStyle.merge(
+              style: const TextStyle(fontFamilyFallback: ['NotoSansBengali']),
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
+          home: const _ExitConfirmationRoot(child: WorkerLaunchPage()),
         ),
-        home: const _ExitConfirmationRoot(child: WorkerLaunchPage()),
       ),
     );
   }
@@ -1528,13 +1555,40 @@ String _inviteMessageFor(AppLanguage? language) {
   return 'Try FIM - Foreigner in Malaysia. Official services, learning, useful tools and help for foreigners in Malaysia in one app.\n\nDownload: https://play.google.com/store/apps/details?id=com.expatstatuschecker.expat_status_checker';
 }
 
-ThemeData _buildAppTheme(Brightness brightness) {
+Color _countryAccent(CountryOption? country) => switch (
+  country?.code.toUpperCase()
+) {
+  'BD' => const Color(0xFF167A4A),
+  'IN' => const Color(0xFFB65D18),
+  'ID' => const Color(0xFFB52A31),
+  'NP' => const Color(0xFF8D2435),
+  'PK' => const Color(0xFF176B4D),
+  'CN' => const Color(0xFFB3262D),
+  'JP' => const Color(0xFFB2263A),
+  'KR' => const Color(0xFF315A9A),
+  'TH' => const Color(0xFF31558D),
+  'PH' => const Color(0xFF1E5D9B),
+  'MY' || null => AppPalette.flagNavy,
+  _ => const Color(0xFF405A80),
+};
+
+Color _countrySecondary(CountryOption? country) => switch (
+  country?.code.toUpperCase()
+) {
+  'BD' => AppPalette.flagRed,
+  'IN' => const Color(0xFF2E7D52),
+  'MY' || null => AppPalette.flagRed,
+  _ => const Color(0xFFD28B2D),
+};
+
+ThemeData _buildAppTheme(Brightness brightness, {CountryOption? country}) {
   final isDark = brightness == Brightness.dark;
+  final accent = _countryAccent(country);
   final scheme = ColorScheme(
     brightness: brightness,
-    primary: isDark ? AppPalette.flagYellow : AppPalette.flagNavy,
-    onPrimary: isDark ? AppPalette.flagNavy : AppPalette.flagWhite,
-    secondary: AppPalette.flagRed,
+    primary: accent,
+    onPrimary: AppPalette.flagWhite,
+    secondary: _countrySecondary(country),
     onSecondary: AppPalette.flagWhite,
     error: AppPalette.flagRed,
     onError: AppPalette.flagWhite,
@@ -5091,6 +5145,71 @@ String _serviceCardTitle(ServiceItem service, bool bangla) {
   }
 }
 
+class _WeatherClock extends StatefulWidget {
+  const _WeatherClock({required this.country, required this.isBangla});
+
+  final CountryOption? country;
+  final bool isBangla;
+
+  @override
+  State<_WeatherClock> createState() => _WeatherClockState();
+}
+
+class _WeatherClockState extends State<_WeatherClock> {
+  late DateTime _now = DateTime.now();
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final country = widget.country;
+    final selectedTime = _selectedCountryTime(country);
+    final deviceLabel = widget.isBangla ? 'আপনার local time' : 'Your local time';
+    final selectedLabel = country == null
+        ? ''
+        : widget.isBangla
+        ? '${country.name} time'
+        : '${country.name} time';
+    final selectedValue = _formatClock(selectedTime);
+    final localValue = _formatClock(_now);
+    final isSameTime = selectedValue == localValue;
+    return Wrap(
+      spacing: 12,
+      runSpacing: 2,
+      children: [
+        Text(
+          '$deviceLabel: $localValue',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.88),
+            fontSize: 10.5,
+          ),
+        ),
+        if (!isSameTime)
+          Text(
+            '$selectedLabel: $selectedValue',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.68),
+              fontSize: 10.5,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _FimWeatherHero extends StatelessWidget {
   const _FimWeatherHero({required this.isBangla, required this.onRefresh});
 
@@ -5191,6 +5310,14 @@ class _FimWeatherHero extends StatelessWidget {
                               fontSize: 10,
                             ),
                           ),
+                        const SizedBox(height: 3),
+                        ValueListenableBuilder<CountryOption?>(
+                          valueListenable: activeWorkerCountry,
+                          builder: (context, country, _) => _WeatherClock(
+                            country: country,
+                            isBangla: isBangla,
+                          ),
+                        ),
                       ],
                     ),
                   ),
